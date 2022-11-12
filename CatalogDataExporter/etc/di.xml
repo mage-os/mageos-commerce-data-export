@@ -20,6 +20,7 @@
                 <item name="taxClass" xsi:type="object">Magento\CatalogDataExporter\Model\Provider\Product\Formatter\TaxClassFormatter</item>
                 <item name="scopes" xsi:type="object">Magento\CatalogDataExporter\Model\Provider\Formatter\ScopeFormatter</item>
                 <item name="description" xsi:type="object">Magento\CatalogDataExporter\Model\Provider\Product\Formatter\DescriptionFormatter</item>
+                <item name="dates" xsi:type="object">Magento\CatalogDataExporter\Model\Provider\Product\Formatter\DateFormatter</item>
             </argument>
         </arguments>
     </type>
@@ -509,12 +510,12 @@
 
     <!-- Solution for command indexer:set-dimensions-mode -->
     <type name="Magento\Catalog\Model\Indexer\Product\Price\TableMaintainer">
-        <plugin name="data-exporter-create-price-view" type="Magento\CatalogDataExporter\Plugin\Index\CreatePriceReadTable" />
+        <plugin name="data-exporter-create-price-view" type="Magento\CatalogDataExporter\Plugin\Index\CreateViewAfterTableMaintenance" />
     </type>
     <type name="Magento\Catalog\Model\Indexer\Product\Price\ModeSwitcher">
-        <plugin name="data-exporter-mode-price-view" type="Magento\CatalogDataExporter\Plugin\Index\CreatePriceReadTable" />
+        <plugin name="data-exporter-mode-price-view" type="Magento\CatalogDataExporter\Plugin\Index\CreateViewAfterSwitchDimensionMode" />
     </type>
     <type name="\Magento\Catalog\Model\Indexer\Product\Price\ModeSwitcherConfiguration">
-        <plugin name="data-exporter-config-price-view" type="Magento\CatalogDataExporter\Plugin\Index\CreatePriceReadTable" />
+        <plugin name="data-exporter-config-price-view" type="Magento\CatalogDataExporter\Plugin\Index\SaveNewPriceIndexerMode" />
     </type>
 </config>
