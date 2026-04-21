@@ -10,7 +10,6 @@ namespace Magento\CatalogDataExporter\Model\Query;
 use Magento\Catalog\Model\Indexer\Category\Product\AbstractAction;
 use Magento\Framework\App\ResourceConnection;
 use Magento\Framework\DB\Select;
-use Magento\Framework\DB\Sql\ColumnValueExpression;
 use Magento\Framework\Indexer\ScopeResolver\IndexScopeResolver as TableResolver;
 use Magento\Framework\Search\Request\Dimension;
 
@@ -68,38 +67,6 @@ class ProductCategoryDataQuery
     }
 
     /**
-     * Get URL key attribute ID
-     *
-     * @return int
-     */
-    private function getUrlPathAttributeId() : int
-    {
-        $connection = $this->resourceConnection->getConnection();
-        return (int)$connection->fetchOne(
-            $connection->select()
-                ->from(['a' => $this->getTable('eav_attribute')], ['attribute_id'])
-                ->join(
-                    ['t' => $this->getTable('eav_entity_type')],
-                    't.entity_type_id = a.entity_type_id',
-                    []
-                )
-                ->where('t.entity_table = ?', $this->mainTable)
-                ->where('a.attribute_code = ?', 'url_path')
-        );
-    }
-
-    /**
-     * Get resource table for attribute
-     *
-     * @param string $tableName
-     * @return string
-     */
-    private function getAttributeTable(string $tableName) : string
-    {
-        return $this->resourceConnection->getTableName([$tableName, 'varchar']);
-    }
-
-    /**
      * Get query for provider
      *
      * @param array $arguments
@@ -112,26 +79,14 @@ class ProductCategoryDataQuery
         $connection = $this->resourceConnection->getConnection();
 
         if (isset($this->cache[$storeViewCode])) {
-            $categoryEntityTableName = $this->cache[$storeViewCode]['categoryEntityTableName'];
-            $joinField = $this->cache[$storeViewCode]['joinField'];
-            $storeId = $this->cache[$storeViewCode]['storeId'];
-            $attributeId = $this->cache[$storeViewCode]['attributeId'];
-            $categoryProductIndexTableName = $this->cache[$storeViewCode]['categoryProductIndexTableName'];
-            $categoryAttributeTableName = $this->cache[$storeViewCode]['categoryAttributeTableName'];
+            ['categoryEntityTableName' => $categoryEntityTableName,
+                'categoryProductIndexTableName' => $categoryProductIndexTableName] = $this->cache[$storeViewCode];
         } else {
             $categoryEntityTableName = $this->getTable($this->mainTable);
-            $joinField = $connection->getAutoIncrementField($categoryEntityTableName);
-            $storeId = $this->getStoreId($storeViewCode);
-            $attributeId = $this->getUrlPathAttributeId();
-            $categoryProductIndexTableName = $this->getIndexTableName($storeId);
-            $categoryAttributeTableName = $this->getAttributeTable($this->mainTable);
+            $categoryProductIndexTableName = $this->getIndexTableName($this->getStoreId($storeViewCode));
             $this->cache[$storeViewCode] = compact(
                 'categoryEntityTableName',
-                'joinField',
-                'storeId',
-                'attributeId',
-                'categoryProductIndexTableName',
-                'categoryAttributeTableName'
+                'categoryProductIndexTableName'
             );
         }
 
@@ -146,50 +101,18 @@ class ProductCategoryDataQuery
             )
             ->join(
                 ['cce' => $categoryEntityTableName],
-                'ccp.category_id = cce.entity_id',
-                []
-            );
-
-        $defaultValueTableAlias = 'url_key_default';
-        $storeValueTableAlias = 'url_key_store';
-        $defaultValueJoinCondition = sprintf(
-            '%1$s.%2$s = cce.%2$s AND %1$s.attribute_id = %3$d AND %1$s.store_id = 0',
-            $defaultValueTableAlias,
-            $joinField,
-            $attributeId
-        );
-        $storeViewValueJoinCondition = sprintf(
-            '%1$s.%2$s = cce.%2$s AND %1$s.attribute_id = %3$d AND %1$s.store_id = %4$d',
-            $storeValueTableAlias,
-            $joinField,
-            $attributeId,
-            $storeId
-        );
-        $select
-            ->joinLeft(
-                [$defaultValueTableAlias => $categoryAttributeTableName],
-                $defaultValueJoinCondition,
-                []
-            )
-            ->joinLeft(
-                [$storeValueTableAlias => $categoryAttributeTableName],
-                $storeViewValueJoinCondition,
-                []
-            )
-            ->where('ccp.product_id IN (?)', $productIds)
-            ->having('categoryPath IS NOT NULL')
-            ->columns(
+                'ccp.category_id = cce.entity_id AND cce.level > 1',
                 [
-                    'categoryPath' => new ColumnValueExpression(
-                        sprintf('IFNULL(%1$s.value, %2$s.value)', $storeValueTableAlias, $defaultValueTableAlias)
-                    )
+                    'path' => 'path'
                 ]
-            );
+            )
+            ->where('ccp.product_id IN (?)', $productIds);
+
         return $select;
     }
 
     /**
-     * Get store ID by store view code
+     * Returns the store_id for the given store view code.
      *
      * @param string $storeViewCode
      * @return int

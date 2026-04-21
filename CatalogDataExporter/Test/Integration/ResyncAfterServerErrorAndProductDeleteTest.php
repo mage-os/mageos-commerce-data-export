@@ -161,7 +161,7 @@ class ResyncAfterServerErrorAndProductDeleteTest extends AbstractProductTestHelp
      * is_deleted=1/status=2 entry still exists, the re-creation must naturally heal the feed so
      * no delete event is sent to SaaS for the live SKU.
      *
-     * How it works: feed_id = hash(sku, storeViewCode) — it is NOT tied to entity_id.
+     * How it works: feed_id = hash(sku, storeViewCode) - it is NOT tied to entity_id.
      * source_entity_id is a mutable column. When the new entity is indexed, insertOnDuplicate on
      * feed_id overwrites the stuck row in-place: the old is_deleted=1/status=2 entry is replaced
      * by is_deleted=0/status=200 with the new entity_id. The retry cron then finds nothing to retry,
@@ -169,7 +169,7 @@ class ResyncAfterServerErrorAndProductDeleteTest extends AbstractProductTestHelp
      *
      * Expected outcome after re-creation + resync:
      *   - New entity row (source_entity_id=newId):  is_deleted=0, status=200
-     *   - Old entity row (source_entity_id=oldId):  not found — overwritten by new entity in-place
+     *   - Old entity row (source_entity_id=oldId):  not found - overwritten by new entity in-place
      *
      * @magentoDbIsolation disabled
      * @magentoAppIsolation enabled
@@ -214,7 +214,7 @@ class ResyncAfterServerErrorAndProductDeleteTest extends AbstractProductTestHelp
         // --- Resync ---
         $this->emulatePartialReindexBehavior([$newProductId, $originalProductId]);
 
-        // New entity must be active — the stuck delete row was replaced in-place on upsert.
+        // New entity must be active - the stuck delete row was replaced in-place on upsert.
         $this->assertFeedEntry(
             $newProductId,
             200,
@@ -322,7 +322,7 @@ class ResyncAfterServerErrorAndProductDeleteTest extends AbstractProductTestHelp
             $row,
             sprintf(
                 '%sFeed entry not found for entity_id=%d store=%s',
-                $message ? "$message — " : '',
+                $message ? "$message - " : '',
                 $entityId,
                 self::STORE_VIEW_CODE
             )
@@ -330,12 +330,12 @@ class ResyncAfterServerErrorAndProductDeleteTest extends AbstractProductTestHelp
         $this->assertEquals(
             $expectedStatus,
             (int)$row['status'],
-            sprintf('%sstatus mismatch for entity_id=%d', $message ? "$message — " : '', $entityId)
+            sprintf('%sstatus mismatch for entity_id=%d', $message ? "$message - " : '', $entityId)
         );
         $this->assertEquals(
             $expectedIsDeleted,
             $row['is_deleted'],
-            sprintf('%sis_deleted mismatch for entity_id=%d', $message ? "$message — " : '', $entityId)
+            sprintf('%sis_deleted mismatch for entity_id=%d', $message ? "$message - " : '', $entityId)
         );
     }
 }

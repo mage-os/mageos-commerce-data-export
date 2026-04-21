@@ -7,10 +7,12 @@ declare(strict_types=1);
 
 namespace Magento\CatalogDataExporter\Model\Provider\Product;
 
-use Magento\Framework\App\ResourceConnection;
+use Magento\CatalogDataExporter\Model\Provider\Category\CategoryUrlPathBuilder;
 use Magento\CatalogDataExporter\Model\Query\ProductCategoryDataQuery;
 use Magento\DataExporter\Exception\UnableRetrieveData;
 use Magento\DataExporter\Model\Logging\CommerceDataExportLoggerInterface as LoggerInterface;
+use Magento\Framework\App\ObjectManager;
+use Magento\Framework\App\ResourceConnection;
 
 /**
  * Product categories data provider
@@ -33,18 +35,26 @@ class CategoryData
     private $logger;
 
     /**
+     * @var CategoryUrlPathBuilder
+     */
+    private $urlPathBuilder;
+
+    /**
      * @param ResourceConnection $resourceConnection
      * @param ProductCategoryDataQuery $productCategoryDataQuery
      * @param LoggerInterface $logger
+     * @param CategoryUrlPathBuilder|null $urlPathBuilder
      */
     public function __construct(
         ResourceConnection $resourceConnection,
         ProductCategoryDataQuery $productCategoryDataQuery,
-        LoggerInterface $logger
+        LoggerInterface $logger,
+        ?CategoryUrlPathBuilder $urlPathBuilder = null
     ) {
         $this->resourceConnection = $resourceConnection;
         $this->productCategoryDataQuery = $productCategoryDataQuery;
         $this->logger = $logger;
+        $this->urlPathBuilder = $urlPathBuilder ?? ObjectManager::getInstance()->get(CategoryUrlPathBuilder::class);
     }
 
     /**
@@ -68,11 +78,33 @@ class CategoryData
                 $results = $connection->fetchAll(
                     $this->productCategoryDataQuery->getQuery($queryArguments, $storeViewCode)
                 );
+
+                // Build url_paths for all unique categories returned for this store.
+                $pathsByEntityId = [];
+                foreach ($results as $result) {
+                    $pathsByEntityId[(int)$result['categoryId']] = $result['path'];
+                }
+                $urlPaths = $this->urlPathBuilder->resolveUrlPaths($pathsByEntityId, $storeViewCode);
+
                 foreach ($results as $result) {
                     $key = implode('-', [$storeViewCode, $result['productId'], $result['categoryId']]);
+                    $categoryData = $result;
+                    unset($categoryData['path']); // internal field, not part of the feed schema
+                    $path = $urlPaths[(int)$result['categoryId']] ?? null;
+                    if (!$path) {
+                        $this->logger->error(sprintf(
+                            'Unable to resolve url_path for category %d with path "%s" for store view "%s".',
+                            $result['categoryId'],
+                            $result['path'],
+                            $storeViewCode
+                        ));
+                        continue;
+                    }
+                    $categoryData['categoryPath'] = $path;
+
                     $output[$key]['productId'] = $result['productId'];
                     $output[$key]['storeViewCode'] = $storeViewCode;
-                    $output[$key]['categoryData'] = $result;
+                    $output[$key]['categoryData'] = $categoryData;
                 }
             }
         } catch (\Throwable $exception) {

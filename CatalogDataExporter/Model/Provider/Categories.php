@@ -8,12 +8,14 @@ declare(strict_types=1);
 
 namespace Magento\CatalogDataExporter\Model\Provider;
 
+use Magento\CatalogDataExporter\Model\Provider\Category\CategoryUrlPathBuilder;
 use Magento\CatalogDataExporter\Model\Provider\Category\Formatter\FormatterInterface;
 use Magento\CatalogDataExporter\Model\Provider\EavAttributes\EntityEavAttributesResolver;
 use Magento\CatalogDataExporter\Model\Query\CategoryMainQuery;
 use Magento\DataExporter\Exception\UnableRetrieveData;
 use Magento\DataExporter\Export\DataProcessorInterface;
 use Magento\DataExporter\Model\Indexer\FeedIndexMetadata;
+use Magento\Framework\App\ObjectManager;
 use Magento\Framework\App\ResourceConnection;
 use Magento\Store\Model\Store;
 use Magento\DataExporter\Model\Logging\CommerceDataExportLoggerInterface as LoggerInterface;
@@ -49,24 +51,32 @@ class Categories implements DataProcessorInterface
     private $entityEavAttributesResolver;
 
     /**
+     * @var CategoryUrlPathBuilder
+     */
+    private $urlPathBuilder;
+
+    /**
      * @param ResourceConnection $resourceConnection
      * @param CategoryMainQuery $categoryMainQuery
      * @param FormatterInterface $formatter
      * @param LoggerInterface $logger
      * @param EntityEavAttributesResolver $entityEavAttributesResolver
+     * @param CategoryUrlPathBuilder|null $urlPathBuilder
      */
     public function __construct(
         ResourceConnection $resourceConnection,
         CategoryMainQuery $categoryMainQuery,
         FormatterInterface $formatter,
         LoggerInterface $logger,
-        EntityEavAttributesResolver $entityEavAttributesResolver
+        EntityEavAttributesResolver $entityEavAttributesResolver,
+        ?CategoryUrlPathBuilder $urlPathBuilder = null
     ) {
         $this->resourceConnection = $resourceConnection;
         $this->categoryMainQuery = $categoryMainQuery;
         $this->formatter = $formatter;
         $this->logger = $logger;
         $this->entityEavAttributesResolver = $entityEavAttributesResolver;
+        $this->urlPathBuilder = $urlPathBuilder ?? ObjectManager::getInstance()->get(CategoryUrlPathBuilder::class);
     }
 
     /**
@@ -89,12 +99,14 @@ class Categories implements DataProcessorInterface
                 $output = [];
                 [$mappedCategories, $attributesData] = $dataBatch;
                 foreach ($mappedCategories as $storeCode => $categories) {
-                    $output[] = \array_map($this->formatter->format(...), \array_replace_recursive(
+                    $merged = \array_replace_recursive(
                         $categories,
                         $this->entityEavAttributesResolver->resolve($attributesData[$storeCode], $storeCode)
-                    ));
+                    );
+                    $merged = $this->injectUrlPaths($merged);
+                    \array_push($output, ...\array_map($this->formatter->format(...), $merged));
                 }
-                $dataProcessorCallback($this->get(\array_merge(...$output)));
+                $dataProcessorCallback($this->get($output));
             }
         } catch (\Throwable $exception) {
             throw new UnableRetrieveData(
@@ -156,5 +168,52 @@ class Categories implements DataProcessorInterface
         }
 
         yield [$mappedCategories, $attributesData];
+    }
+
+    /**
+     * Computes urlPath from url_key EAV values and injects it into each category row.
+     *
+     * This replaces the stored url_path EAV value, which may be absent or stale after a category
+     * move due to a core bug in Category::move() that deletes url_path EAV rows for all stores
+     * except the last one in getStoreIds().
+     *
+     * The storeId and rootCategoryId fields (from CategoryMainQuery) are internal and are removed
+     * from the row before it reaches the formatter.
+     *
+     * @param array $categories  [categoryId => row] for a single store view
+     * @return array
+     */
+    private function injectUrlPaths(array $categories): array
+    {
+        if (empty($categories)) {
+            return $categories;
+        }
+
+        $firstRow = reset($categories);
+        $storeViewCode = $firstRow['storeViewCode'];
+
+        $pathsByEntityId = array_map(fn(array $row): string => $row['path'], $categories);
+        $urlPaths = $this->urlPathBuilder->resolveUrlPaths($pathsByEntityId, $storeViewCode);
+
+        foreach ($categories as $categoryId => &$categoryData) {
+            $path = $urlPaths[(int)$categoryId] ?? '';
+            // keep 1st level category without url key/path (like 1/2 "Default Category")
+            // for backward compatibility but remove empty path
+            if (!$path && $categoryData['level'] > 1) {
+                $this->logger->error(sprintf(
+                    'Unable to resolve url_path for category %d with path "%s", url_key "%s", store "%s".',
+                    $categoryData['categoryId'],
+                    $categoryData['path'] ?? '',
+                    $categoryData['urlKey'] ?? '',
+                    $storeViewCode
+                ));
+                unset($categoryData['storeId'], $categoryData['rootCategoryId']);
+                continue;
+            }
+            $categoryData['urlPath'] = $path;
+            unset($categoryData['storeId'], $categoryData['rootCategoryId']);
+        }
+
+        return $categories;
     }
 }

@@ -7,6 +7,7 @@ declare(strict_types=1);
 
 namespace Magento\CatalogDataExporter\Test\Integration;
 
+use Magento\CatalogDataExporter\Model\Provider\Category\CategoryUrlPathBuilder;
 use Magento\Framework\Exception\NoSuchEntityException;
 use Magento\Store\Model\StoreManagerInterface;
 use Magento\Indexer\Model\Processor;
@@ -71,6 +72,8 @@ class CategoryUrlKeyChangeProductFeedTest extends AbstractProductTestHelper
         $parentCategory->setUrlPath(self::NEW_PARENT_URL_KEY);
         $this->categoryRepository->save($parentCategory);
 
+        $this->resetUrlPathBuilderCache();
+
         $this->indexerProcessor->updateMview();
         $this->indexerProcessor->reindexAllInvalid();
 
@@ -111,6 +114,25 @@ class CategoryUrlKeyChangeProductFeedTest extends AbstractProductTestHelper
             $actualByCategoryId,
             'categoryData must reflect new parent url_key for the changed category and its children.'
         );
+    }
+
+    /**
+     * Resets CategoryUrlPathBuilder's in-memory caches via reflection.
+     *
+     * The builder is a singleton that caches url_keys and built url_paths across indexer runs.
+     * Within a single test (setUp indexes once, then the test body changes data and indexes again)
+     * the cached values become stale.
+     *
+     * @return void
+     */
+    private function resetUrlPathBuilderCache(): void
+    {
+        $builder = Bootstrap::getObjectManager()->get(CategoryUrlPathBuilder::class);
+        $ref = new \ReflectionClass($builder);
+        foreach (['urlPathCache', 'urlKeyCache'] as $property) {
+            $prop = $ref->getProperty($property);
+            $prop->setValue($builder, []);
+        }
     }
 
     /**

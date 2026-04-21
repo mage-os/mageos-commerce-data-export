@@ -143,15 +143,27 @@ foreach (\array_merge($mainStoreCategories, $customStoresCategories) as $data) {
         ->save();
 }
 
-foreach ($customStoresCategories as $data) {
-    foreach ([$storeCustomOne, $storeCustomTwo] as $store) {
+// Build url_path for each category per store, tracking parent url_path so child paths
+// are computed correctly. url_path must be kept in sync with url_key here because
+// CategoryRepository::save() does not automatically update url_path when only url_key
+// changes for a store view.
+foreach ([$storeCustomOne, $storeCustomTwo] as $store) {
+    $urlPathByParentId = []; // parent_id => url_path built so far for this store
+
+    foreach ($customStoresCategories as $data) {
         $storeManager->setCurrentStore($store);
         $category = $categoryRepository->get($data['id'], $store->getId());
 
+        $urlKey = \sprintf('%s_%s', $category->getUrlKey(), $store->getCode());
+        $parentUrlPath = $urlPathByParentId[$data['parent_id']] ?? '';
+        $urlPath = $parentUrlPath !== '' ? $parentUrlPath . '/' . $urlKey : $urlKey;
+
         $category->setName(\sprintf('%s_%s', $category->getName(), $store->getCode()))
-            ->setUrlKey(\sprintf('%s_%s', $category->getUrlKey(), $store->getCode()));
+            ->setUrlKey($urlKey)
+            ->setUrlPath($urlPath);
 
         $categoryRepository->save($category);
+        $urlPathByParentId[$data['id']] = $urlPath;
     }
 }
 
