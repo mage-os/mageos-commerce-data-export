@@ -11,7 +11,7 @@ use Magento\DataExporter\Export\Processor;
 use Magento\TestFramework\Helper\Bootstrap;
 use PHPUnit\Framework\TestCase;
 
-final class ScopesDataExporterTest extends TestCase
+class ScopesDataExporterTest extends TestCase
 {
     private const EXPECTED_WEBSITE_DATA = [
         [
@@ -75,8 +75,14 @@ final class ScopesDataExporterTest extends TestCase
      */
     public function testShouldExportScopesCustomerGroupData(): void
     {
-        $customerGroups = $this->processor->process('scopesCustomerGroup', [['customerGroupId' => 0], ['customerGroupId' => 1]]);
+        $customerGroups = $this->processor->process(
+            'scopesCustomerGroup',
+            [
+                ['customerGroupId' => 0],
+                ['customerGroupId' => 1]
+            ]
+        );
         self::assertIsArray($customerGroups, "Expecting a data array");
-        self::assertEquals(self::EXPECTED_CUSTOMER_GROUP_DATA, $customerGroups, "Customer data mismatch");
+        self::assertEqualsCanonicalizing(self::EXPECTED_CUSTOMER_GROUP_DATA, $customerGroups, "Customer data mismatch");
     }
 }
