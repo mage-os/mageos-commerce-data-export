@@ -61,6 +61,8 @@ class SystemAttributeRegistrar
     }
 
     /**
+     * Register configured system attributes that are missing in the EAV storage.
+     *
      * @return void
      * @throws LocalizedException
      */
@@ -79,6 +81,8 @@ class SystemAttributeRegistrar
     }
 
     /**
+     * Get codes of system attributes to register.
+     *
      * @return array
      */
     public function getAttributeCodes(): array
@@ -98,6 +102,8 @@ class SystemAttributeRegistrar
     }
 
     /**
+     * Return attribute codes that already exist in the EAV storage.
+     *
      * @param array $attributeCodes
      * @return array
      * @throws LocalizedException
@@ -118,6 +124,8 @@ class SystemAttributeRegistrar
     }
 
     /**
+     * Resolve entity type id for the catalog product entity.
+     *
      * @return int
      * @throws \Magento\Framework\Exception\LocalizedException
      */
@@ -127,7 +135,9 @@ class SystemAttributeRegistrar
     }
 
     /**
-     * @param $attributeCode
+     * Create system attribute in the EAV storage using provided properties.
+     *
+     * @param string $attributeCode
      * @param array $properties
      * @return void
      * @throws LocalizedException
@@ -169,7 +179,7 @@ class SystemAttributeRegistrar
         } catch (\Throwable $e) {
             $this->logger->warning(
                 sprintf(
-                    'Failed to create attribute "%s". Error: %s',
+                    'CDE01-17 Failed to create attribute "%s". Will be retried on next sync. Error: %s',
                     $attributeCode,
                     $e->getMessage()
                 )
@@ -178,7 +188,9 @@ class SystemAttributeRegistrar
     }
 
     /**
-     * @param $configurationMap
+     * Validate configuration map and fill exporter overrides with defaults when absent.
+     *
+     * @param array $configurationMap
      * @return void
      * @throws LocalizedException
      */
@@ -210,6 +222,8 @@ class SystemAttributeRegistrar
     }
 
     /**
+     * Get attribute properties from configuration map by attribute code.
+     *
      * @param string $attributeCode
      * @return array
      */
@@ -219,6 +233,8 @@ class SystemAttributeRegistrar
     }
 
     /**
+     * Build a map of attribute properties keyed by attribute code.
+     *
      * @param array $attributeCodes
      * @return array
      */

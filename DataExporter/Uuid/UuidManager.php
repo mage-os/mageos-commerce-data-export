@@ -88,7 +88,7 @@ class UuidManager
             } catch (\Throwable $e) {
                 $attempts++;
                 $this->logger->error(
-                    \sprintf('Failed to assign UUID for type: %s, ids: %s', $type, implode(',', $entityIds)),
+                    \sprintf('CDE01-14 Failed to assign UUIDs for type: %s, ids: %s', $type, implode(',', $entityIds)),
                     ['exception' => $e]
                 );
                 continue ;
@@ -98,7 +98,7 @@ class UuidManager
         }
 
         $error = \sprintf(
-            'Failed to assign UUID for type: %s, ids: %s. duplicates: %s',
+            'CDE01-15 Failed to assign UUIDs for type: %s, ids: %s. duplicates: %s',
             $type,
             implode(',', $entityIds),
             $duplicates ? implode(',', \array_merge(...$duplicates)) : ''

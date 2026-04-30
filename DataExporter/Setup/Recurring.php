@@ -68,7 +68,12 @@ class Recurring implements \Magento\Framework\Setup\InstallSchemaInterface
 
         foreach ($indexers as $indexer) {
             try {
-                $indexerAction = $this->actionFactory->create($indexer->getActionClass());
+                try {
+                    $indexerAction = $this->actionFactory->create($indexer->getActionClass());
+                } catch (\BadMethodCallException $ignore) {
+                    // ad-hoc: non Feed Indexer may require additional arguments for instantiation. Ignoring them
+                    continue;
+                }
                 if ($indexerAction instanceof FeedIndexer && $indexer->isScheduled() === false) {
                     $this->logger->info(
                         sprintf("Setting mode Update On Schedule for indexer %s", $indexer->getTitle())
@@ -76,10 +81,16 @@ class Recurring implements \Magento\Framework\Setup\InstallSchemaInterface
                     $indexer->setScheduled(true);
                 }
             } catch (\Throwable $e) {
-                $this->logger->error('Cannot set indexer to Update On Schedule mode: ' . $e->getMessage(), [
-                    'indexer' => $indexer->getId(),
-                    'exception' => $e
-                ]);
+                $this->logger->error(
+                    sprintf(
+                        'CDE04-02 Cannot set indexer to Update On Schedule mode for indexer %s. Error: %s',
+                        $indexer->getId(),
+                        $e->getMessage()
+                    ),
+                    [
+                        'exception' => $e
+                    ]
+                );
                 continue;
             }
         }

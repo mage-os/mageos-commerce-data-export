@@ -116,6 +116,8 @@ class FeedIndexer implements IndexerActionInterface, MviewActionInterface, FeedI
     }
 
     /**
+     * Build the "locked by" name used to tag the resync lock with the current PID.
+     *
      * @return string
      * @see \Magento\DataExporter\Lock\FeedLockManager::lock for name patter
      */
@@ -189,12 +191,17 @@ class FeedIndexer implements IndexerActionInterface, MviewActionInterface, FeedI
         return $this->feedIndexMetadata;
     }
 
+    /**
+     * Log a warning when the feed is not locked before a reindex call.
+     *
+     * @return void
+     */
     private function logWarningIfFeedIsNotLocked()
     {
         if (!$this->lockManager->isLocked($this->feedIndexMetadata->getFeedName())) {
             $this->logger->warning(
                 sprintf(
-                    'Unexpected call: feed "%s" is not locked, trace: %s',
+                    'CDE04-20 Unexpected call: feed "%s" is not locked, trace: %s',
                     $this->feedIndexMetadata->getFeedName(),
                     (new \Exception())->getTraceAsString()
                 )

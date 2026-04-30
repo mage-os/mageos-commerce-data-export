@@ -66,8 +66,15 @@ class AdvancedInventoryProvider
             }
 
         } catch (\Throwable $e) {
-            $this->logger->error('StockStatus export error: ' . $e->getMessage(), ['exception' => $e]);
-            throw $e;
+            $this->logger->error(
+                sprintf(
+                    'CDE01-01 Failed to add stock info to "ac_inventory" attribute for ids "%s". Error: %s',
+                    implode(',', $productIds),
+                    $e->getMessage()
+                ),
+                ['exception' => $e]
+            );
+            return [];
         }
         return $output;
 
@@ -93,7 +100,7 @@ class AdvancedInventoryProvider
             if (!isset($row[$field])) {
                 $this->logger->warning(
                     sprintf(
-                        'Field "%s" is missing in row %s',
+                        'CDE01-02 Field "%s" is missing in row %s',
                         $field,
                         var_export($row, true)
                     )
@@ -138,7 +145,7 @@ class AdvancedInventoryProvider
         if (!isset($this->inventoryConfig[$field])) {
             $this->logger->warning(
                 sprintf(
-                    'Invalid field "%s" requested from inventory config %s',
+                    'CDE01-03 Invalid field "%s" requested from inventory config %s',
                     $field,
                     var_export($this->inventoryConfig, true)
                 )

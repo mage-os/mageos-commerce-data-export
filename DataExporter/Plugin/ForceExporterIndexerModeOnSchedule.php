@@ -55,8 +55,8 @@ class ForceExporterIndexerModeOnSchedule
                 return;
             }
         } catch (\Throwable $e) {
-            $this->logger->error(
-                'Data Exporter exception has occurred: ' . $e->getMessage(),
+            $this->logger->warning(
+                'CDE04-17 Failed to check indexer type when setting schedule mode: ' . $e->getMessage(),
                 ['exception' => $e]
             );
             return $proceed($scheduled);

@@ -47,8 +47,8 @@ class FeedIndexerProvider
     public function getIndexer(FeedIndexMetadata $metadata): ?IndexerInterface
     {
         if ($metadata->getIndexerId() == null) {
-            $this->logger->warning(
-                'Feed metadata does not contain indexer name',
+            $this->logger->error(
+                'CDE04-04 Feed metadata does not contain indexer name. Check di.xml config',
                 ['feedName' => $metadata->getFeedName()]
             );
             return null;
@@ -58,7 +58,7 @@ class FeedIndexerProvider
             return $this->indexerRegistry->get($metadata->getIndexerId());
         } catch (\Exception $e) {
             $this->logger->error(
-                'Cannot load feed indexer for feed',
+                'CDE04-05 Cannot load feed indexer for feed',
                 ['feedName' => $metadata->getFeedName(), 'error' => $e->getMessage()]
             );
         }

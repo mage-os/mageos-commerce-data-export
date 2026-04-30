@@ -93,7 +93,7 @@ class Generator implements BatchGeneratorInterface
         } catch (\Throwable $e) {
             $this->logger->error(
                 sprintf(
-                    '%s feed: error occurred: %s',
+                    'CDE04-08 Error retrying failed items sync for feed "%s". Error: %s',
                     $metadata->getFeedName(),
                     $e->getMessage()
                 ),

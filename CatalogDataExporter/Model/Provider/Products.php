@@ -117,6 +117,8 @@ class Products implements DataProcessorInterface
         }
 
         $connection = $this->resourceConnection->getConnection();
+        $notFoundByScope = [];
+
         foreach ($queryArguments as $scopeId => $productData) {
             $storeViewItemN = [];
             $cursor = $connection->query(
@@ -146,20 +148,24 @@ class Products implements DataProcessorInterface
                     unset($mappedProducts[$storeViewCode], $attributesData[$storeViewCode]);
                 }
             }
+
+            if (empty($storeViewItemN)) {
+                $notFoundByScope[$scopeId] = \array_keys($productData);
+            }
         }
-        if (empty($storeViewItemN)) {
-            $productsIds = \implode(',', \array_unique(\array_column($arguments, 'productId')));
-            $scopes = \implode(',', \array_unique(\array_column($arguments, 'scopeId')));
+
+        if (!empty($mappedProducts)) {
+            $this->processProducts($mappedProducts, $attributesData, $dataProcessorCallback);
+        }
+
+        foreach ($notFoundByScope as $scopeId => $productIds) {
             $this->logger->info(
                 \sprintf(
-                    'Product exporter: no product data found for ids %s in scopes %s.'
-                    . ' Is product deleted or un-assigned from website?',
-                    $productsIds,
-                    $scopes
+                    'The following products will be marked as "deleted" in scope "%s": "%s"',
+                    $scopeId == 0 ? 'all scopes' : $scopeId,
+                    \implode(',', $productIds),
                 )
             );
-        } else {
-            $this->processProducts($mappedProducts, $attributesData, $dataProcessorCallback);
         }
     }
 

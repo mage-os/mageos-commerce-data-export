@@ -171,7 +171,7 @@ class FeedIndexProcessorCreateUpdate implements FeedIndexProcessorInterface
                     if (!$e instanceof UnableRetrieveData) {
                         $this->logger->error(
                             sprintf(
-                                'Error during full sync. Message: "%s". Skipped IDs: [%s]',
+                                'CDE04-10 Error during full sync. Message: "%s". The following IDs were skipped: [%s]',
                                 $e->getMessage(),
                                 implode(',', array_column($chunk, $feedIdentity))
                             ),
@@ -229,14 +229,23 @@ class FeedIndexProcessorCreateUpdate implements FeedIndexProcessorInterface
             $processManager = $this->processManagerFactory->create(['threadsCount' => $threadCount]);
             $processManager->execute($userFunctions);
         } catch (Throwable $e) {
-            $this->logger->error(
-                'Data Exporter exception has occurred: ' . $e->getMessage(),
+            $this->logger->warning(
+                sprintf(
+                    'CDE04-11 Feed "%s" sync failed. Resync will be run on next cron run. Error: %s',
+                    $metadata->getFeedName(),
+                    $e->getMessage()
+                ),
                 ['exception' => $e]
             );
         } finally {
             // must be thrown in order to mark indexer as "invalid" for next re-run
             if ($this->errorOccurredOnFullReindex) {
-                throw new UnableRetrieveData('Full resync failed. Check logs for details');
+                throw new UnableRetrieveData(
+                    sprintf(
+                        'Feed "%s" sync failed. Resync will be run on next cron run',
+                        $metadata->getFeedName()
+                    )
+                );
             }
 
         }
@@ -411,11 +420,6 @@ class FeedIndexProcessorCreateUpdate implements FeedIndexProcessorInterface
     {
         foreach ($data as $key => $row) {
             if ($deleted) {
-                if (!isset($row[FeedIndexMetadata::FEED_TABLE_FIELD_FEED_HASH])) {
-                    $this->logger->error("Feed hash is not set for the product id: ". $row['productId']);
-                    unset($data[$key]);
-                    continue ;
-                }
                 $identifier = $row[FeedIndexMetadata::FEED_TABLE_FIELD_FEED_ID];
                 $row = $this->serializer->unserialize($row[FeedIndexMetadata::FEED_TABLE_FIELD_FEED_DATA]);
                 $row['deleted'] = true;
@@ -431,8 +435,8 @@ class FeedIndexProcessorCreateUpdate implements FeedIndexProcessorInterface
             }
             unset($data[$key]);
             if (empty($identifier)) {
-                $this->logger->error(
-                    'Identifier for feed item is empty. Skip sync for entity',
+                $this->logger->warning(
+                    'CDE04-19 The identifier for a feed item is empty. Sync is skipped for the entity.',
                     [
                         'feed' => $metadata->getFeedName(),
                         'item' => var_export($row, true),

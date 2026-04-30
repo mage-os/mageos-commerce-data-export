@@ -35,7 +35,7 @@ class IndexInvalidationManager
      */
     public function __construct(
         IndexerFactory $indexerFactory,
-        array $invalidationEvents
+        array $invalidationEvents = []
     ) {
         $this->indexerFactory = $indexerFactory;
         $this->invalidationEvents = $invalidationEvents;

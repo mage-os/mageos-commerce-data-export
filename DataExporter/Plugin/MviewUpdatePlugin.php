@@ -60,8 +60,22 @@ class MviewUpdatePlugin
                     $this->viewMaterializer->execute($view);
                 } catch (\Throwable $e) {
                     // Hot fix before AC-8768
+                    $this->logger->warning(
+                        sprintf(
+                            'CDE04-03 Partial sync failed for changelog "%s". Should be retried. Error: %s',
+                            $view->getChangelog()->getName(),
+                            $e->getMessage()
+                        ),
+                        ['exception' => $e]
+                    );
                     $exception->addException(
-                        new RuntimeException(new Phrase('Mview fail %1', [$view->getId()]), $e)
+                        new RuntimeException(
+                            new Phrase(
+                                'Partial sync failed for "%1". Error: %2',
+                                [$view->getId(), $e->getMessage()]
+                            ),
+                            $e
+                        )
                     );
                 }
             } else {
@@ -70,12 +84,7 @@ class MviewUpdatePlugin
         }
 
         if ($exception->wasErrorAdded()) {
-            foreach ($exception->getErrors() as $e) {
-                $this->logger->error(
-                    'Data Exporter exception has occurred: ' . $e->getMessage(),
-                    ['exception' => $e]
-                );
-            }
+            // to re-start partial update
             throw $exception;
         }
     }

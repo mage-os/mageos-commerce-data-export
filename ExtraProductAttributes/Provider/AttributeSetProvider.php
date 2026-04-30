@@ -52,8 +52,15 @@ class AttributeSetProvider
                 ];
             }
         } catch (\Throwable $e) {
-            $this->logger->error('Attribute Set export error: ' . $e->getMessage(), ['exception' => $e]);
-            throw $e;
+            $this->logger->error(
+                sprintf(
+                    'CDE01-04 Was not able to add data to "ac_attribute_set" attribute for ids "%s". Error: %s',
+                    implode(',', $productIds),
+                    $e->getMessage()
+                ),
+                ['exception' => $e]
+            );
+            return [];
         }
         return $output;
     }

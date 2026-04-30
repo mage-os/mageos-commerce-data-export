@@ -8,8 +8,10 @@ declare(strict_types=1);
 
 namespace Magento\CatalogDataExporter\Plugin\Index;
 
-use Magento\CatalogDataExporter\Model\Indexer\IndexInvalidationManager;
+use Magento\CatalogDataExporter\Model\Indexer\IndexInvalidationManager as DeprecatedIndexerManager;
 use Magento\DataExporter\Model\Logging\CommerceDataExportLoggerInterface;
+use Magento\DataExporter\Service\IndexInvalidationManager;
+use Magento\Framework\App\ObjectManager;
 use Magento\Store\Model\ResourceModel\Store;
 
 /**
@@ -21,23 +23,25 @@ class InvalidateOnStoreChange
 {
     private IndexInvalidationManager $invalidationManager;
     private string $invalidationEvent;
-    private CommerceDataExportLoggerInterface $logger;
 
     /**
      * InvalidateOnChange constructor.
      *
-     * @param IndexInvalidationManager $invalidationManager
+     * @param DeprecatedIndexerManager $invalidationManager
      * @param CommerceDataExportLoggerInterface $logger
      * @param string $invalidationEvent
+     * @param IndexInvalidationManager|null $indexInvalidationManager
+     * @SuppressWarnings(PHPMD.UnusedFormalParameter)
      */
     public function __construct(
-        IndexInvalidationManager $invalidationManager,
+        DeprecatedIndexerManager $invalidationManager,
         CommerceDataExportLoggerInterface $logger,
-        string $invalidationEvent = 'group_changed'
+        string $invalidationEvent = 'group_changed',
+        ?IndexInvalidationManager $indexInvalidationManager = null
     ) {
-        $this->invalidationManager = $invalidationManager;
         $this->invalidationEvent = $invalidationEvent;
-        $this->logger = $logger;
+        $this->invalidationManager = $indexInvalidationManager
+            ?? ObjectManager::getInstance()->get(IndexInvalidationManager::class);
     }
 
     /**
@@ -51,7 +55,8 @@ class InvalidateOnStoreChange
      */
     public function afterSave(Store $subject, Store $result): Store
     {
-        return $this->invalidate($result);
+        $this->invalidationManager->invalidate($this->invalidationEvent);
+        return $result;
     }
 
     /**
@@ -65,23 +70,7 @@ class InvalidateOnStoreChange
      */
     public function afterDelete(Store $subject, Store $result): Store
     {
-        return $this->invalidate($result);
-    }
-
-    /**
-     * @param Store $result
-     * @return Store
-     */
-    private function invalidate(Store $result): Store
-    {
-        try {
-            $this->invalidationManager->invalidate($this->invalidationEvent);
-        } catch (\Throwable $e) {
-            $this->logger->error(
-                'Data Exporter exception has occurred: ' . $e->getMessage(),
-                ['exception' => $e]
-            );
-        }
+        $this->invalidationManager->invalidate($this->invalidationEvent);
         return $result;
     }
 }

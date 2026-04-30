@@ -96,7 +96,7 @@ class Generator implements BatchGeneratorInterface
         } catch (\Throwable $e) {
             $this->logger->error(
                 sprintf(
-                    '%s feed: error occurred: %s',
+                    'CDE04-09 Error on full resync for feed "%s". Error: %s',
                     $metadata->getFeedName(),
                     $e->getMessage()
                 ),
@@ -175,14 +175,16 @@ class Generator implements BatchGeneratorInterface
                     $batchTable->getBatchNumberField(),
                     $batchNumberIncrement,
                     $startFrom,
-                    $maxProcessedItemsLimit),
+                    $maxProcessedItemsLimit
+                ),
                 $batchTable->getBatchTableName(),
                 [$batchTable->getBatchNumberField(), $sourceTableField]
             );
             // TOTO: make initialization more explicit
             $initializeCreate = $processedItems === 0;
             if ($initializeCreate) {
-                $this->logger->info(sprintf(
+                $this->logger->info(
+                    sprintf(
                         'Creating batch table `%s`. Start position: %s',
                         $batchTable->getBatchTableName(),
                         $startFrom
@@ -205,6 +207,10 @@ class Generator implements BatchGeneratorInterface
             $batchNumberIncrement = intdiv($totalProcessedItems, $metadata->getBatchSize());
 
             if ($processedItems === 0 || $batchNumberIncrement === 0) {
+                if ($processedItems !== 0) {
+                    // if last batch processed, {$batchTable->create()} doesn't analyze table, do it here
+                    $connection->query(sprintf('ANALYZE TABLE %s', $batchTable->getBatchTableName()));
+                }
                 break;
             }
             $startFrom += self::MAX_PROCESSED_ITEMS_PER_ITERATION;
@@ -222,15 +228,15 @@ class Generator implements BatchGeneratorInterface
         $this->logger->info(
             $totalProcessedItems > 0
                 ? sprintf(
-                'start processing `%s` items in `%s` threads with `%s` batch size',
-                $totalProcessedItems,
-                $metadata->getThreadCount(),
-                $metadata->getBatchSize()
-            )
+                    'start processing `%s` items in `%s` threads with `%s` batch size',
+                    $totalProcessedItems,
+                    $metadata->getThreadCount(),
+                    $metadata->getBatchSize()
+                )
                 : sprintf(
-                'nothing to process - no items to sync. Not expected? Are there any items in source table `%s`?',
-                $sourceTableName
-            )
+                    'skipping - no items to sync. Are there any items in source table `%s`?',
+                    $sourceTableName
+                )
         );
 
         return $this->iteratorFactory->create(
@@ -343,6 +349,8 @@ class Generator implements BatchGeneratorInterface
     }
 
     /**
+     * Get the starting value for batch generation based on source table minimum.
+     *
      * @param string $sourceTableName
      * @param string $sourceTableField
      * @return int

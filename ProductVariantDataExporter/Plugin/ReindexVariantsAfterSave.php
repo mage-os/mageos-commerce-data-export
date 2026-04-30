@@ -72,7 +72,11 @@ class ReindexVariantsAfterSave
             }
         } catch (\Throwable $e) {
             $this->logger->error(
-                'Data Exporter exception has occurred: ' . $e->getMessage(),
+                sprintf(
+                    'CDE03-08 Product variants sync scheduling error on product "%s" save. Run resync. Error: %s',
+                    $product->getData('sku') ?? $product->getId(),
+                    $e->getMessage(),
+                ),
                 ['exception' => $e]
             );
         }

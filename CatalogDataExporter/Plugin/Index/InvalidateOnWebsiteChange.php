@@ -8,31 +8,35 @@ declare(strict_types=1);
 
 namespace Magento\CatalogDataExporter\Plugin\Index;
 
-use Magento\CatalogDataExporter\Model\Indexer\IndexInvalidationManager;
+use Magento\CatalogDataExporter\Model\Indexer\IndexInvalidationManager as DeprecatedIndexerManager;
 use Magento\DataExporter\Model\Logging\CommerceDataExportLoggerInterface;
+use Magento\DataExporter\Service\IndexInvalidationManager;
+use Magento\Framework\App\ObjectManager;
 use Magento\Store\Model\ResourceModel\Website;
 
 class InvalidateOnWebsiteChange
 {
     private IndexInvalidationManager $invalidationManager;
     private string $invalidationEvent;
-    private CommerceDataExportLoggerInterface $logger;
 
     /**
      * InvalidateOnChange constructor.
      *
-     * @param IndexInvalidationManager $invalidationManager
+     * @param DeprecatedIndexerManager $invalidationManager
      * @param CommerceDataExportLoggerInterface $logger
      * @param string $invalidationEvent
+     * @param IndexInvalidationManager|null $indexInvalidationManager
+     * @SuppressWarnings(PHPMD.UnusedFormalParameter)
      */
     public function __construct(
-        IndexInvalidationManager $invalidationManager,
+        DeprecatedIndexerManager $invalidationManager,
         CommerceDataExportLoggerInterface $logger,
-        string $invalidationEvent = 'website_changed'
+        string $invalidationEvent = 'website_changed',
+        ?IndexInvalidationManager $indexInvalidationManager = null
     ) {
-        $this->invalidationManager = $invalidationManager;
         $this->invalidationEvent = $invalidationEvent;
-        $this->logger = $logger;
+        $this->invalidationManager = $indexInvalidationManager
+            ?? ObjectManager::getInstance()->get(IndexInvalidationManager::class);
     }
 
     /**
@@ -46,7 +50,8 @@ class InvalidateOnWebsiteChange
      */
     public function afterSave(Website $subject, Website $result): Website
     {
-        return $this->invalidate($result);
+        $this->invalidationManager->invalidate($this->invalidationEvent);
+        return $result;
     }
 
     /**
@@ -60,23 +65,7 @@ class InvalidateOnWebsiteChange
      */
     public function afterDelete(Website $subject, Website $result): Website
     {
-        return $this->invalidate($result);
-    }
-
-    /**
-     * @param Website $result
-     * @return Website
-     */
-    private function invalidate(Website $result): Website
-    {
-        try {
-            $this->invalidationManager->invalidate($this->invalidationEvent);
-        } catch (\Throwable $e) {
-            $this->logger->error(
-                'Data Exporter exception has occurred: ' . $e->getMessage(),
-                ['exception' => $e]
-            );
-        }
+        $this->invalidationManager->invalidate($this->invalidationEvent);
         return $result;
     }
 }

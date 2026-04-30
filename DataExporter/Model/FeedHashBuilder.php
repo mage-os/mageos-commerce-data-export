@@ -80,7 +80,12 @@ class FeedHashBuilder
             $value = $this->getNestedValue($feedItem, $field);
             if ($value === null) {
                 $this->logger->error(
-                    "Cannot build identifier for '$field' from feed item: " . var_export($feedItem, true)
+                    sprintf(
+                        'CDE01-16 "%s" feed sync error: cannot build identifier for "%s". Item skipped: %s',
+                        $metadata->getFeedName(),
+                        $field,
+                        var_export($feedItem, true)
+                    )
                 );
                 continue;
             }

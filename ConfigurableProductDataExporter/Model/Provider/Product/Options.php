@@ -432,7 +432,8 @@ class Options implements OptionProviderInterface
             }
         } catch (LocalizedException $exception) {
             $this->logger->error(
-                "Cannot get status attribute: " . $exception->getMessage(),
+                "CDE01-09 Cannot get status attribute. Product variants ignore stock status. Error: "
+                . $exception->getMessage(),
                 ['exception' => $exception]
             );
         }

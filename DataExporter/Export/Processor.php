@@ -73,6 +73,7 @@ class Processor
      * @param callable $dataProcessorCallback
      * @param bool $lastChunk
      * @return void
+     * @SuppressWarnings(PHPMD.UnusedFormalParameter)
      */
     public function processWithCallback(
         FeedIndexMetadata $metadata,
@@ -93,10 +94,11 @@ class Processor
             // if error happened during data collecting we skip entire process
             $this->logger->error(
                 \sprintf(
-                    'Unable to collect data for provider %s, error: %s, skipped IDs: [%s]',
+                    'CDE01-05 Unable to sync feed "%s" for ids "%s". Affected data provider: "%s". Error: %s',
+                    $metadata->getFeedName(),
+                    \implode(', ', array_column($arguments, $metadata->getFeedIdentity())),
                     $provider,
                     $exception->getMessage(),
-                    \implode(', ', array_column($arguments, $metadata->getFeedIdentity()))
                 ),
                 ['exception' => $exception]
             );
@@ -122,13 +124,13 @@ class Processor
             $snapshots = $this->extractor->extract($info, $arguments);
             return $this->transformer->transform($info, $snapshots);
         } catch (\Throwable $exception) {
-            $provider = empty($info) === false ? $info->getRootNode()->getField()['provider'] : '';
             // if error happened during data collecting we skip entire process
             $this->logger->error(
                 \sprintf(
-                    'Unable to collect data for provider %s, error: %s',
-                    $provider,
-                    $exception->getMessage()
+                    'CDE01-06 Unable to sync feed "%s" for ids "%s". Error: %s',
+                    $fieldName,
+                    \var_export($arguments, true),
+                    $exception->getMessage(),
                 ),
                 ['exception' => $exception]
             );

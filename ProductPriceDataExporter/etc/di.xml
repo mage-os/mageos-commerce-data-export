@@ -78,7 +78,7 @@
         </arguments>
     </type>
 
-    <type name="Magento\CatalogDataExporter\Model\Indexer\IndexInvalidationManager">
+    <type name="Magento\DataExporter\Service\IndexInvalidationManager">
         <arguments>
             <argument name="invalidationEvents" xsi:type="array">
                 <item name="recalculate_prices" xsi:type="array">

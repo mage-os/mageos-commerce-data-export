@@ -56,13 +56,26 @@ class ScheduleProductUpdate
             if (!empty($productSkus) && $productIndexer->isScheduled()) {
                 $productIds = $this->getProductIdsFromSkus($productSkus);
                 if (!$productIds) {
-                    $this->logger->warning("Cannot get product ids from SKUs: " . var_export($productSkus, true));
+                    $this->logger->warning(
+                        sprintf(
+                            'CDE03-07 Product sync scheduling error on inventory source save for SKUs: %s. Error: %s',
+                            var_export($productSkus, true),
+                            'cannot get product ids from SKUs'
+                        )
+                    );
                     return ;
                 }
                 $this->updateChangelog($productIds);
             }
         } catch (\Throwable $e) {
-            $this->logger->error('Cannot update indexer during inventory source item save: ' . $e->getMessage());
+            $this->logger->warning(
+                sprintf(
+                    'CDE03-07 Product sync scheduling error on inventory source save for SKUs: %s. Error: %s',
+                    var_export($productSkus, true),
+                    $e->getMessage()
+                ),
+                ['exception' => $e]
+            );
         }
     }
 

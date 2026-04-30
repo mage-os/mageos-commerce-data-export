@@ -454,7 +454,7 @@
         </arguments>
     </type>
     <!-- Indexes mass-invalidation logic -->
-    <type name="Magento\CatalogDataExporter\Model\Indexer\IndexInvalidationManager">
+    <type name="Magento\DataExporter\Service\IndexInvalidationManager">
         <arguments>
             <argument name="invalidationEvents" xsi:type="array">
                 <item name="store_changed" xsi:type="array">

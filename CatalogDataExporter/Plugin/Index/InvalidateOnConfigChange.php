@@ -8,10 +8,12 @@ declare(strict_types=1);
 
 namespace Magento\CatalogDataExporter\Plugin\Index;
 
-use Magento\CatalogDataExporter\Model\Indexer\IndexInvalidationManager;
+use Magento\CatalogDataExporter\Model\Indexer\IndexInvalidationManager as DeprecatedIndexerManager;
 use Magento\Config\Model\Config;
 use Magento\DataExporter\Model\Logging\CommerceDataExportLoggerInterface;
+use Magento\DataExporter\Service\IndexInvalidationManager;
 use Magento\Framework\App\Config\ScopeConfigInterface;
+use Magento\Framework\App\ObjectManager;
 
 /**
  * Class InvalidateOnConfigChange
@@ -21,30 +23,30 @@ use Magento\Framework\App\Config\ScopeConfigInterface;
 class InvalidateOnConfigChange
 {
     private IndexInvalidationManager $invalidationManager;
-    private ScopeConfigInterface $scopeConfig;
     private string $invalidationEvent;
     private array $configValues;
-    private CommerceDataExportLoggerInterface $logger;
 
     /**
-     * @param IndexInvalidationManager $invalidationManager
+     * @param DeprecatedIndexerManager $invalidationManager
      * @param ScopeConfigInterface $scopeConfig
      * @param CommerceDataExportLoggerInterface $logger
      * @param string $invalidationEvent
      * @param array $configValues
+     * @param IndexInvalidationManager|null $indexInvalidationManager
+     * @SuppressWarnings(PHPMD.UnusedFormalParameter)
      */
     public function __construct(
-        IndexInvalidationManager $invalidationManager,
-        ScopeConfigInterface  $scopeConfig,
-        CommerceDataExportLoggerInterface $logger,
+        DeprecatedIndexerManager $invalidationManager,
+        private readonly ScopeConfigInterface $scopeConfig,
+        private readonly CommerceDataExportLoggerInterface $logger,
         string $invalidationEvent = 'config_changed',
-        array $configValues = []
+        array $configValues = [],
+        ?IndexInvalidationManager $indexInvalidationManager = null
     ) {
-        $this->invalidationManager = $invalidationManager;
-        $this->scopeConfig = $scopeConfig;
         $this->invalidationEvent = $invalidationEvent;
         $this->configValues = $configValues;
-        $this->logger = $logger;
+        $this->invalidationManager = $indexInvalidationManager
+            ?? ObjectManager::getInstance()->get(IndexInvalidationManager::class);
     }
 
     /**
@@ -74,27 +76,24 @@ class InvalidateOnConfigChange
             }
         } catch (\Throwable $e) {
             $this->logger->error(
-                'Data Exporter exception has occurred: ' . $e->getMessage(),
+                sprintf(
+                    'CDE03-14 Failed to read config values. Indexer invalidation for event "%s" skipped. Error: %s',
+                    $this->invalidationEvent,
+                    $e->getMessage()
+                ),
                 ['exception' => $e]
             );
         }
-        
+
         $result = $proceed();
-        
-        try {
-            foreach ($check as $path => $beforeValue) {
-                if ($beforeValue != $this->scopeConfig->getValue($path)) {
-                    $this->invalidationManager->invalidate($this->invalidationEvent);
-                    break;
-                }
+
+        foreach ($check as $path => $beforeValue) {
+            if ($beforeValue != $this->scopeConfig->getValue($path)) {
+                $this->invalidationManager->invalidate($this->invalidationEvent);
+                break;
             }
-        } catch (\Throwable $e) {
-            $this->logger->error(
-                'Data Exporter exception has occurred: ' . $e->getMessage(),
-                ['exception' => $e]
-            );
         }
-        
+
         return $result;
     }
 }

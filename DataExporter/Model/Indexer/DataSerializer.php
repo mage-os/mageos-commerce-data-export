@@ -7,7 +7,6 @@ declare(strict_types=1);
 
 namespace Magento\DataExporter\Model\Indexer;
 
-use Magento\DataExporter\Exception\UnableRetrieveData;
 use Magento\DataExporter\Model\FeedExportStatus;
 use Magento\DataExporter\Model\Logging\CommerceDataExportLoggerInterface;
 use Magento\DataExporter\Status\ExportStatusCodeProvider;
@@ -120,10 +119,21 @@ class DataSerializer implements DataSerializerInterface
             }
             $sourceEntityId = $row[FeedIndexMetadata::FEED_TABLE_FIELD_SOURCE_ENTITY_ID] ?? null;
             if ($sourceEntityId === null) {
-                $this->logger->warning(
-                    'Source entity id is null. Check your data. field: %s, Feed data: %s',
-                    ['field' => $metadata->getFeedIdentity(), 'data' => var_export($feedData, true)]
+                try {
+                    $rowSerialized = $this->serializer->serialize($row);
+                } catch (\InvalidArgumentException $e) {
+                    $rowSerialized = 'error on serializing';
+                }
+                $this->logger->error(
+                    sprintf(
+                        'CDE01-07 Source entity id is null. Item sync was skip for feed "%s". field: "%s", item: %s',
+                        $metadata->getFeedName(),
+                        $metadata->getFeedIdentity(),
+                        $rowSerialized
+                    )
                 );
+                $itemN--;
+                continue;
             }
 
             $outputRow = [FeedIndexMetadata::FEED_TABLE_FIELD_SOURCE_ENTITY_ID => $sourceEntityId];

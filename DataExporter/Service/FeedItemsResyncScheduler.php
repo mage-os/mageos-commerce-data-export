@@ -116,7 +116,7 @@ class FeedItemsResyncScheduler
             $dataForInsert[IndexStateProvider::UPDATE_OPERATION] ?? []
         );
         $this->logger->error(
-            'Cannot schedule resync for feeds',
+            'CDE03-01 Cannot schedule resync for feeds',
             [
                 'feed' => $metadata->getFeedName(),
                 'source_ids' => \array_unique(

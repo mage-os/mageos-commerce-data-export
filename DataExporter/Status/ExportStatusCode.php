@@ -84,6 +84,18 @@ class ExportStatusCode
     }
 
     /**
+     * Return original status: HTTP status code or application status code
+     *
+     * @return int
+     */
+    public function getOriginalStatusCode(): int
+    {
+        return $this->originalStatusCode;
+    }
+
+    /**
+     * Map raw status code to a retryable or non-retryable export status code.
+     *
      * @param int $statusCode
      * @return int
      */

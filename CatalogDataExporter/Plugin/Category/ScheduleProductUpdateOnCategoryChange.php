@@ -52,7 +52,7 @@ class ScheduleProductUpdateOnCategoryChange
         if ($categoryPath === '' || !str_contains($categoryPath, '/')) {
             $this->logger->warning(
                 sprintf(
-                    'Skipping product feed update scheduling. Category path "%s" is wrongly formatted',
+                    'CDE03-02 Skipping product feed update scheduling. Category path "%s" is wrongly formatted',
                     $categoryPath
                 )
             );

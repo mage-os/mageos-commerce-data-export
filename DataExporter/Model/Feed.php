@@ -81,7 +81,7 @@ class Feed implements FeedInterface
             )
         );
         if ($ignoredExportStatus !== null) {
-            $this->logger->warning(__METHOD__ . ' is deprecated. $ignoredExportStatus parameter is ignored');
+            $this->logger->info(__METHOD__ . ' is deprecated. $ignoredExportStatus parameter is ignored');
         }
         return $this->fetchData(
             $this->feedQuery->getDataSelect(

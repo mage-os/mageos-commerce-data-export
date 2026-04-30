@@ -201,7 +201,7 @@ class Categories implements DataProcessorInterface
             // for backward compatibility but remove empty path
             if (!$path && $categoryData['level'] > 1) {
                 $this->logger->error(sprintf(
-                    'Unable to resolve url_path for category %d with path "%s", url_key "%s", store "%s".',
+                    'CDE01-21 Unable to resolve url_path for category %d with path "%s", url_key "%s", store "%s"',
                     $categoryData['categoryId'],
                     $categoryData['path'] ?? '',
                     $categoryData['urlKey'] ?? '',

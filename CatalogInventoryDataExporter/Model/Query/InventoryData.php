@@ -123,7 +123,11 @@ class InventoryData
 
         if (!$union) {
             $this->logger->error(
-                "No stocks found for website sales channel. Cannot obtain stock status."
+                sprintf(
+                    'CDE01-08 Cannot collect "inStock" for products "%s": no sales channel data for stores "%s"',
+                    implode(',', $productIds),
+                    implode(',', $storeViewCodes)
+                )
             );
             return null;
         }

@@ -158,7 +158,7 @@ class ViewMaterializer
         $threadCount = min($feedMetadata->getThreadCount(), $batchIterator->count());
         $userFunctions = [];
         for ($threadNumber = 1; $threadNumber <= $threadCount; $threadNumber++) {
-            $userFunctions[] = function () use ($action, $batchIterator) {
+            $userFunctions[] = function () use ($action, $batchIterator, $feedMetadata) {
                 // phpcs:disable Generic.Formatting.DisallowMultipleStatements.SameLine
                 // phpcs:ignore Generic.CodeAnalysis.ForLoopWithTestFunctionCall
                 for ($batchIterator->rewind(); $batchIterator->valid(); $batchIterator->next()) {
@@ -167,8 +167,12 @@ class ViewMaterializer
                         $action->execute($ids);
                     } catch (\Throwable $e) {
                         $batchIterator->markBatchForRetry();
-                        $this->logger->error(
-                            'Partial sync error: ' . $e->getMessage(),
+                        $this->logger->warning(
+                            sprintf(
+                                'CDE04-12 Partial sync failed for feed "%s". Retry has been scheduled. Error: %s',
+                                $feedMetadata->getFeedName(),
+                                $e->getMessage()
+                            ),
                             ['exception' => $e]
                         );
                     }
@@ -193,7 +197,6 @@ class ViewMaterializer
             return $action->getFeedIndexMetadata();
         } else {
             $message = sprintf('Feed for the "%s" action class is not registered', $action::class);
-            $this->logger->error($message);
             throw new \InvalidArgumentException($message);
         }
     }

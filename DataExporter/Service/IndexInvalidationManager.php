@@ -46,14 +46,21 @@ class IndexInvalidationManager
     public function invalidate(string $eventName): void
     {
         $indexers = $this->invalidationEvents[$eventName] ?? [];
+        $successfullyInvalidated = [];
         try {
             foreach ($indexers as $indexerId) {
                 $this->indexerFactory->create()->load($indexerId)->invalidate();
+                $successfullyInvalidated[] = $indexerId;
             }
-        } catch (\Exception $e) {
+        } catch (\Throwable $e) {
             $this->logger->error(
-                'Data Exporter: cannot invalidate indexer for event',
-                ['event' => $eventName, 'error' => $e->getMessage()]
+                sprintf(
+                    'CDE03-13 Cannot invalidate indexers "%s" for event "%s". Error: %s',
+                    implode(', ', array_diff($indexers, $successfullyInvalidated)),
+                    $eventName,
+                    $e->getMessage()
+                ),
+                ['error' => $e->getMessage()]
             );
         }
     }

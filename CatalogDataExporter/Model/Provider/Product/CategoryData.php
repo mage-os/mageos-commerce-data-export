@@ -93,7 +93,7 @@ class CategoryData
                     $path = $urlPaths[(int)$result['categoryId']] ?? null;
                     if (!$path) {
                         $this->logger->error(sprintf(
-                            'Unable to resolve url_path for category %d with path "%s" for store view "%s".',
+                            'CDE01-22 Unable to resolve url_path for category %d with path "%s" for store view "%s"',
                             $result['categoryId'],
                             $result['path'],
                             $storeViewCode

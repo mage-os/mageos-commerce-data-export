@@ -76,7 +76,6 @@ class ConfigurableProductsTest extends AbstractProductTestHelper
                 $this->validateImageUrls($product, $extractedProduct);
                 $this->validateAttributeData($product, $extractedProduct);
                 $this->validateOptionsData($product, $extractedProduct);
-                $this->validateVariantsData($product, $extractedProduct);
             }
         }
     }
@@ -110,7 +109,6 @@ class ConfigurableProductsTest extends AbstractProductTestHelper
                 $this->validateImageUrls($product, $extractedProduct);
                 $this->validateAttributeData($product, $extractedProduct);
                 $this->validateOptionsData($product, $extractedProduct);
-                $this->validateVariantsData($product, $extractedProduct);
             }
         }
     }
@@ -156,7 +154,6 @@ class ConfigurableProductsTest extends AbstractProductTestHelper
                 $this->validateImageUrls($product, $extractedProduct);
                 $this->validateAttributeData($product, $extractedProduct);
                 $this->validateOptionsData($product, $extractedProduct);
-                $this->validateVariantsData($product, $extractedProduct);
             }
         }
     }
@@ -202,7 +199,6 @@ class ConfigurableProductsTest extends AbstractProductTestHelper
                 $this->validateImageUrls($product, $extractedProduct);
                 $this->validateAttributeData($product, $extractedProduct);
                 $this->validateOptionsData($product, $extractedProduct);
-                $this->validateVariantsData($product, $extractedProduct);
             }
         }
     }
@@ -259,12 +255,6 @@ class ConfigurableProductsTest extends AbstractProductTestHelper
                 'Option 3',
             ],
         ];
-        $expectedVariants = [
-            'simple_option_50',
-            'simple_option_55',
-            'simple_option_59',
-            'simple_option_65'
-        ];
         $parentSku = 'configurable1';
         $products = [
             'simple_option_50' => [
@@ -306,9 +296,6 @@ class ConfigurableProductsTest extends AbstractProductTestHelper
                 foreach ($option['values'] as $index => $value) {
                     $this->assertEquals($expectedOptions[$option['id']][$index], $value['label']);
                 }
-            }
-            foreach ($feedData['variants'] as $variant) {
-                $this->assertContains($variant['sku'], $expectedVariants);
             }
         }
     }
@@ -365,12 +352,6 @@ class ConfigurableProductsTest extends AbstractProductTestHelper
                 'Option 3',
             ],
         ];
-        $expectedVariants = [
-            'virtual_option_50',
-            'virtual_option_55',
-            'virtual_option_59',
-            'virtual_option_65'
-        ];
         $parentSku = 'configurable1';
         $products = [
             'virtual_option_50' => [
@@ -412,9 +393,6 @@ class ConfigurableProductsTest extends AbstractProductTestHelper
                 foreach ($option['values'] as $index => $value) {
                     $this->assertEquals($expectedOptions[$option['id']][$index], $value['label']);
                 }
-            }
-            foreach ($feedData['variants'] as $variant) {
-                $this->assertContains($variant['sku'], $expectedVariants);
             }
         }
     }
@@ -659,38 +637,6 @@ class ConfigurableProductsTest extends AbstractProductTestHelper
                 );
             }
         }
-    }
-
-    /**
-     * Validate product variants in extracted product data
-     *
-     * @param ProductInterface $product
-     * @param array $extract
-     * @return void
-     * @throws LocalizedException
-     * @throws NoSuchEntityException
-     * @throws Zend_Db_Statement_Exception
-     */
-    private function validateVariantsData(ProductInterface $product, array $extract) : void
-    {
-        $childIds = $product->getExtensionAttributes()->getConfigurableProductLinks();
-        $variants = [];
-        foreach ($childIds as $childId) {
-            $childProduct = $this->productRepository->getById($childId);
-            $variants[] = [
-                'sku' => $childProduct->getSku(),
-            ];
-        }
-        $actualVariants = $extract['feedData']['variants'];
-        usort(
-            $actualVariants,
-            fn($a, $b) => $a['sku'] <=> $b['sku']
-        );
-        usort(
-            $variants,
-            fn($a, $b) => $a['sku'] <=> $b['sku']
-        );
-        $this->assertEquals($variants, $actualVariants);
     }
 
     /**

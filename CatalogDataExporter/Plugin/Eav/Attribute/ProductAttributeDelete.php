@@ -9,12 +9,14 @@ namespace Magento\CatalogDataExporter\Plugin\Eav\Attribute;
 
 use Magento\Catalog\Api\Data\ProductInterface;
 use Magento\Catalog\Model\ResourceModel\Eav\Attribute;
-use Magento\CatalogDataExporter\Model\Indexer\IndexInvalidationManager;
+use Magento\CatalogDataExporter\Model\Indexer\IndexInvalidationManager as DeprecatedIndexerManager;
+use Magento\DataExporter\Model\Logging\CommerceDataExportLoggerInterface;
+use Magento\DataExporter\Service\IndexInvalidationManager;
+use Magento\Framework\App\ObjectManager;
 use Magento\Framework\App\ResourceConnection;
 use Magento\Framework\EntityManager\MetadataPool;
 use Magento\Framework\Indexer\IndexerRegistry;
 use Magento\Store\Model\Store;
-use Magento\DataExporter\Model\Logging\CommerceDataExportLoggerInterface;
 
 /**
  * MySQL trigger does not call in case of cascade deleting (by FK), as a result product not re-indexed when product
@@ -29,38 +31,34 @@ class ProductAttributeDelete
 {
     private const MAX_PRODUCTS_FOR_INSERT = 10000;
 
-    private ResourceConnection $resourceConnection;
-    private MetadataPool $metadataPool;
     private IndexInvalidationManager $invalidationManager;
-    private IndexerRegistry $indexerRegistry;
-    private CommerceDataExportLoggerInterface $logger;
-    private int $maxProductsPerInsert;
 
     /**
      * @param ResourceConnection $resourceConnection
      * @param MetadataPool $metadataPool
-     * @param IndexInvalidationManager $invalidationManager
+     * @param DeprecatedIndexerManager $invalidationManager
      * @param IndexerRegistry $indexerRegistry
      * @param CommerceDataExportLoggerInterface $logger
      * @param int $maxProductsPerInsert
+     * @param IndexInvalidationManager|null $indexInvalidationManager
+     * @SuppressWarnings(PHPMD.UnusedFormalParameter)
      */
     public function __construct(
-        ResourceConnection $resourceConnection,
-        MetadataPool $metadataPool,
-        IndexInvalidationManager $invalidationManager,
-        IndexerRegistry $indexerRegistry,
-        CommerceDataExportLoggerInterface $logger,
-        int $maxProductsPerInsert = self::MAX_PRODUCTS_FOR_INSERT
+        private readonly ResourceConnection $resourceConnection,
+        private readonly MetadataPool $metadataPool,
+        DeprecatedIndexerManager $invalidationManager,
+        private readonly IndexerRegistry $indexerRegistry,
+        private readonly CommerceDataExportLoggerInterface $logger,
+        private readonly int $maxProductsPerInsert = self::MAX_PRODUCTS_FOR_INSERT,
+        ?IndexInvalidationManager $indexInvalidationManager = null
     ) {
-        $this->resourceConnection = $resourceConnection;
-        $this->metadataPool = $metadataPool;
-        $this->invalidationManager = $invalidationManager;
-        $this->indexerRegistry = $indexerRegistry;
-        $this->logger = $logger;
-        $this->maxProductsPerInsert = $maxProductsPerInsert;
+        $this->invalidationManager = $indexInvalidationManager
+            ?? ObjectManager::getInstance()->get(IndexInvalidationManager::class);
     }
 
     /**
+     * Schedule affected products for reindex when an EAV attribute is deleted.
+     *
      * @param Attribute $attribute
      */
     public function beforeDelete(
@@ -72,10 +70,10 @@ class ProductAttributeDelete
         }
 
         if ($attribute->isStatic()) {
-            $this->invalidationManager->invalidate('product_attribute_deleted');
+            // only user defined and some system attributes supported for products feed.
             return;
         }
-
+        $attributeCode = $attribute->getAttributeCode();
         try {
             $connection = $this->resourceConnection->getConnection('indexer');
             $metadata = $this->metadataPool->getMetadata(ProductInterface::class);
@@ -102,7 +100,11 @@ class ProductAttributeDelete
             }
         } catch (\Throwable $e) {
             $this->logger->error(
-                'Product Data Exporter: attribute deletion error' . $e->getMessage(),
+                sprintf(
+                    'CDE03-06 Product sync scheduling error on attribute "%s" deletion. Run full resync. Error: %s',
+                    $attributeCode,
+                    $e->getMessage()
+                ),
                 ['exception' => $e]
             );
         }

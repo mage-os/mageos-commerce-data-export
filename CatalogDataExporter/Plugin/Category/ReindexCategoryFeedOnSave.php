@@ -60,7 +60,11 @@ class ReindexCategoryFeedOnSave
             }
         } catch (\Throwable $e) {
             $this->logger->error(
-                'Data Exporter exception has occurred: ' . $e->getMessage(),
+                sprintf(
+                    'CDE03-03 Categories sync error on category "%s" save. Run resync. Error: %s',
+                    $subject->getId(),
+                    $e->getMessage(),
+                ),
                 ['exception' => $e]
             );
         }

@@ -43,6 +43,8 @@ class DateWebsiteProvider
     }
 
     /**
+     * Return the current date per website, keyed by website id.
+     *
      * @return array
      */
     public function getWebsitesDate(): array
@@ -70,7 +72,8 @@ class DateWebsiteProvider
                 $timestamp = true;
                 $this->logger->warning(
                     sprintf(
-                        "can't obtain datetime for website: '%s', store: '%s':",
+                        'CDE01-18 Error on getting datetime for catalog price rule fetch. Using system time.'
+                        . ' website: "%s", store: "%s"',
                         $item['website_id'],
                         $item['store_id'],
                     ),

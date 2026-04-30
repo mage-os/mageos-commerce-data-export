@@ -82,7 +82,7 @@ class UuidManagerTest extends TestCase
         $uuidGeneratorMock->method('generateId')->willReturn('uuid');
 
         $this->expectException(\Magento\DataExporter\Uuid\UuidSaveException::class);
-        $this->expectExceptionMessage('Failed to assign UUID for type: test-type, ids: 8,9. duplicates: uuid');
+        $this->expectExceptionMessage('CDE01-15 Failed to assign UUIDs for type: test-type, ids: 8,9. duplicates: uuid');
 
         $uuidManager->assignBulk([8, 9], 'test-type');
     }

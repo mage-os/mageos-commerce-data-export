@@ -103,7 +103,7 @@ class Generator implements BatchGeneratorInterface
             // TODO: throw exception and check it will not impact on cron:run
             $this->logger->error(
                 sprintf(
-                    '%s feed: error occurred: %s',
+                    'CDE04-07 Error on partial resync for feed "%s". Error: %s',
                     $metadata->getFeedName(),
                     $e->getMessage()
                 ),
@@ -161,14 +161,14 @@ class Generator implements BatchGeneratorInterface
         $this->logger->info(
             $totalProcessedItems > 0
                 ? sprintf(
-                'start processing `%s` items in `%s` threads',
-                $totalProcessedItems,
-                $metadata->getThreadCount()
-            )
+                    'start processing `%s` items in `%s` threads',
+                    $totalProcessedItems,
+                    $metadata->getThreadCount()
+                )
                 : sprintf(
-                'nothing to process - no items to sync. Not expected? Are there any items in source table `%s`?',
-                $sourceTableName
-            )
+                    'skipping - no items to sync. Are there any items in source table `%s`?',
+                    $sourceTableName
+                )
         );
 
         $batchIterator = $this->iteratorFactory->create(

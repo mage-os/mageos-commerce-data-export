@@ -96,7 +96,12 @@ class FeedIndexProcessorCreateUpdateDelete extends FeedIndexProcessorCreateUpdat
                 $this->markRemovedEntities->execute($ids, $metadata);
             } catch (\Throwable $e) {
                 $this->logger->error(
-                    sprintf("Cannot delete feed items. product ids: %s", implode(', ', $ids)),
+                    sprintf(
+                        'CDE04-14 Cannot delete feed items for feed "%s" for ids: "%s". Error: %s',
+                        $metadata->getFeedName(),
+                        implode(', ', $ids),
+                        $e->getMessage()
+                    ),
                     ['exception' => $e]
                 );
             }

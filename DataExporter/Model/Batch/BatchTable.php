@@ -124,9 +124,18 @@ class BatchTable
         if ($result instanceof \Zend_Db_Statement_Pdo) {
             $processedItems = (int)$result->rowCount();
         } else {
-            $this->logger->warning('Batch table insert query returned unexpected result');
+            // not expected, unless 3rd party code changed core code
+            $this->logger->warning(
+                sprintf(
+                    'CDE04-16 Batch table insert query "%s" returned unexpected result. Expected: %s, Actual: %s',
+                    $insertDataQuery,
+                    \Zend_Db_Statement_Pdo::class,
+                    is_object($result) ? get_class($result) : gettype($result)
+                )
+            );
         }
 
+        // $processedItems == 0 for full sync when last batch processed; $initializeCreate == null for partial sync
         if ($processedItems === 0 || $initializeCreate === null) {
             $connection->query(sprintf("ANALYZE TABLE %s", $this->batchTableName));
         }

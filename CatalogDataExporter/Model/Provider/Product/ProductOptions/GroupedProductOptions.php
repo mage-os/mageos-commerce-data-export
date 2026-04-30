@@ -67,7 +67,7 @@ class GroupedProductOptions implements ProductOptionProviderInterface
         }
 
         try {
-             foreach ($queryArguments as $storeViewCode => $productIds) {
+            foreach ($queryArguments as $storeViewCode => $productIds) {
                 $cursor = $this->resourceConnection->getConnection()->query(
                     $this->productLinksQuery->getQuery($productIds, $storeViewCode, Link::LINK_TYPE_GROUPED)
                 );
@@ -89,7 +89,7 @@ class GroupedProductOptions implements ProductOptionProviderInterface
             }
         } catch (\Throwable $exception) {
             throw new UnableRetrieveData(
-                sprintf('Unable to retrieve product links: %s', $exception->getMessage()),
+                sprintf('Unable to retrieve grouped product options data: %s', $exception->getMessage()),
                 0,
                 $exception
             );

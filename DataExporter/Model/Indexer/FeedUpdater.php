@@ -123,15 +123,18 @@ class FeedUpdater
             $dataForInsert[IndexStateProvider::UPDATE_OPERATION] ?? []
         );
         $this->logger->error(
-            'Cannot persist export status to feed table',
+            sprintf(
+                'CDE04-13 Sync completed, but failed to persist status to feed table for "%s" feed. Error: %s',
+                $metadata->getFeedName(),
+                $exception->getMessage()
+            ),
             [
-                'feed' => $metadata->getFeedName(),
-                'source_ids' => \array_unique(
+                'source_ids' => array_unique(
                     array_column($feedItems, FeedIndexMetadata::FEED_TABLE_FIELD_SOURCE_ENTITY_ID)
                 ),
                 'feed_ids' => array_column($feedItems, FeedIndexMetadata::FEED_TABLE_FIELD_FEED_ID),
-                'error' => $exception->getMessage(),
-                'error_class' => $exception::class
+                'error_class' => $exception::class,
+                'exception' => $exception,
             ]
         );
     }

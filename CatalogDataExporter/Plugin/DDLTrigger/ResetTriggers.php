@@ -58,8 +58,10 @@ class ResetTriggers
         array $tableNames
     ) {
         try {
+            $affectedViews = [];
             $viewList = $this->getViewsForTables($tableNames);
             foreach ($viewList as $view) {
+                $affectedViews[] = $view->getId();
                 $view->unsubscribe(false);
             }
             $result = $proceed($connection, $tableNames);
@@ -69,7 +71,11 @@ class ResetTriggers
             return $result;
         } catch (\Throwable $e) {
             $this->logger->error(
-                'Data Exporter exception has occurred: ' . $e->getMessage(),
+                sprintf(
+                    'CDE04-06 Failed to reset MView triggers for "%s" on index table switch. Run reindex. Error: %s',
+                    implode(', ', $affectedViews),
+                    $e->getMessage()
+                ),
                 ['exception' => $e]
             );
             return $proceed($connection, $tableNames);

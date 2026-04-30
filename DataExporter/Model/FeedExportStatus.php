@@ -7,6 +7,7 @@ declare(strict_types=1);
 
 namespace Magento\DataExporter\Model;
 
+use Magento\DataExporter\Model\Logging\CommerceDataExportLoggerInterface;
 use Magento\DataExporter\Status\ExportStatusCode;
 use Magento\Framework\App\ObjectManager;
 use Magento\Framework\Serialize\Serializer\Json;
@@ -21,20 +22,23 @@ class FeedExportStatus
     private array $failedItems;
     private array $metadata;
     private Json $jsonSerializer;
+    private CommerceDataExportLoggerInterface $logger;
 
     /**
      * @param ExportStatusCode $status
      * @param string $reasonPhrase
      * @param array $failedItems
-     * @param Json $jsonSerializer
-     * @param array $metadata
+     * @param Json|null $jsonSerializer
+     * @param array|null $metadata
+     * @param CommerceDataExportLoggerInterface|null $logger
      */
     public function __construct(
         ExportStatusCode $status,
         string $reasonPhrase,
         array $failedItems,
         ?Json $jsonSerializer = null,
-        ?array $metadata = []
+        ?array $metadata = [],
+        ?CommerceDataExportLoggerInterface $logger = null,
     ) {
         $this->status = $status;
         $this->reasonPhrase = $reasonPhrase;
@@ -42,6 +46,7 @@ class FeedExportStatus
         $this->metadata = $metadata;
         $this->jsonSerializer = $jsonSerializer
             ?? ObjectManager::getInstance()->get(Json::class);
+        $this->logger = $logger ?? ObjectManager::getInstance()->get(CommerceDataExportLoggerInterface::class);
     }
 
     /**
@@ -81,6 +86,13 @@ class FeedExportStatus
      */
     public function getMetadata(): string
     {
-        return $this->jsonSerializer->serialize($this->metadata);
+        try {
+            return $this->metadata ? $this->jsonSerializer->serialize($this->metadata) : '';
+        } catch (\InvalidArgumentException $e) {
+            $this->logger->warning(
+                'CDE04-15 Failed to serialize metadata after sync. Error: ' . $e->getMessage()
+            );
+            return '';
+        }
     }
 }

@@ -16,8 +16,6 @@ use Magento\DataExporter\Status\ExportStatusCodeFactory;
  */
 class FeedExportStatusBuilder
 {
-    private CommerceDataExportLoggerInterface $logger;
-
     /**
      * @var FeedExportStatusFactory
      */
@@ -32,6 +30,7 @@ class FeedExportStatusBuilder
      * @param FeedExportStatusFactory $feedExportStatusFactory
      * @param ExportStatusCodeFactory $exportStatusCodeFactory
      * @param CommerceDataExportLoggerInterface $logger
+     * @SuppressWarnings(PHPMD.UnusedFormalParameter)
      */
     public function __construct(
         FeedExportStatusFactory $feedExportStatusFactory,
@@ -40,7 +39,6 @@ class FeedExportStatusBuilder
     ) {
         $this->feedExportStatusFactory = $feedExportStatusFactory;
         $this->exportStatusCodeFactory = $exportStatusCodeFactory;
-        $this->logger = $logger;
     }
 
     /**
@@ -58,42 +56,13 @@ class FeedExportStatusBuilder
         array $failedItems = [],
         array $metadata = []
     ) : FeedExportStatus {
-        try {
-            return $this->feedExportStatusFactory->create(
-                [
-                    'status' => $this->buildStatusCode($status),
-                    'reasonPhrase' => $reasonPhrase,
-                    'failedItems' => $failedItems,
-                    'metadata' => $metadata
-                ]
-            );
-
-        } catch (\Throwable $e) {
-            $this->logger->error(
-                'Data Exporter exception has occurred: ' . $e->getMessage(),
-                ['exception' => $e]
-            );
-            throw new \RuntimeException('Unable to instantiate Feed Export Status');
-        }
-    }
-
-    /**
-     * Build status code
-     *
-     * @param int $statusCode
-     * @return ExportStatusCode
-     */
-    private function buildStatusCode(int $statusCode) : ExportStatusCode
-    {
-        try {
-            return $this->exportStatusCodeFactory->create(['statusCode' => $statusCode]);
-
-        } catch (\Throwable $e) {
-            $this->logger->error(
-                'Data Exporter exception has occurred: ' . $e->getMessage(),
-                ['exception' => $e]
-            );
-            throw new \RuntimeException('Unable to instantiate Export Status Code');
-        }
+        return $this->feedExportStatusFactory->create(
+            [
+                'status' => $this->exportStatusCodeFactory->create(['statusCode' => $status]),
+                'reasonPhrase' => $reasonPhrase,
+                'failedItems' => $failedItems,
+                'metadata' => $metadata
+            ]
+        );
     }
 }

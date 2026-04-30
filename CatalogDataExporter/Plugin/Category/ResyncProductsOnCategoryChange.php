@@ -48,17 +48,19 @@ class ResyncProductsOnCategoryChange
         if ($category->isObjectNew()) {
             return $result;
         }
-        $urlKeyChanged = $category->getOrigData('url_key') !== $category->getUrlKey();
+        $oldKey = $category->getOrigData('url_key');
+        $newKey = $category->getUrlKey();
+        $urlKeyChanged = $oldKey !== $newKey;
 
         if (!$urlKeyChanged) {
             return $result;
         }
         $this->logger->info(
             sprintf(
-                'Category id: "%s" url_key changed from "%s" to "%s". Scheduling product feed update.',
+                'Category id: "%s" url_key changed (%s -> %s). Scheduling product feed update.',
                 $category->getId(),
-                $category->getOrigData('url_key'),
-                $category->getUrlKey(),
+                $oldKey,
+                $newKey,
             )
         );
         try {
@@ -66,7 +68,9 @@ class ResyncProductsOnCategoryChange
         } catch (\Throwable $e) {
             $this->logger->error(
                 sprintf(
-                    'ScheduleProductUpdateOnCategoryChange::execute failed: %s',
+                    'CDE03-04 Product sync scheduling error on url key change (%s -> %s). Run resync. Error: %s',
+                    $oldKey,
+                    $newKey,
                     $e->getMessage()
                 ),
                 ['exception' => $e]
@@ -108,7 +112,9 @@ class ResyncProductsOnCategoryChange
         } catch (\Throwable $e) {
             $this->logger->error(
                 sprintf(
-                    'ScheduleProductUpdateOnCategoryChange::execute failed: %s',
+                    'CDE03-05 Product sync scheduling error on category path change (%s -> %s). Run resync. Error: %s',
+                    $oldPath,
+                    $newPath,
                     $e->getMessage()
                 ),
                 ['exception' => $e]
