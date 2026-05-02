@@ -93,6 +93,7 @@ Log codes related to errors or warnings that occur when scheduling or triggering
 | CDE03-18 | critical | `CDE03-18 Failed to recreate product override view subscriptions on customer group delete: {error_message}` | `commerce-data-export-ee/ProductOverrideDataExporter/Plugin/CreateViewAfterChangeCustomerGroup.php:85` |
 | CDE03-19 | error    | `CDE03-19 Failed to remove product override view subscriptions during table maintenance: {error_message}` | `commerce-data-export-ee/ProductOverrideDataExporter/Plugin/CreateViewAfterTableMaintenance.php:69` |
 | CDE03-20 | error    | `CDE03-20 Failed to recreate product override view subscriptions after table maintenance: {error_message}` | `commerce-data-export-ee/ProductOverrideDataExporter/Plugin/CreateViewAfterTableMaintenance.php:93` |
+| CDE03-21 | error    | `CDE03-21 Product sync scheduling error on attribute {%s} option change. Run resync. Error: %s` | `commerce-data-export/CatalogDataExporter/Plugin/Eav/ResyncProductsOnAttributeOptionLabelChange.php:372` |
 
 ---
 

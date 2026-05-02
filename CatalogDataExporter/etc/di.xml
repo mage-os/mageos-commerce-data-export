@@ -555,6 +555,9 @@
     <type name="Magento\Catalog\Model\ResourceModel\Category">
         <plugin name="data-exporter-schedule-product-update-on-category-change" type="Magento\CatalogDataExporter\Plugin\Category\ResyncProductsOnCategoryChange"/>
     </type>
+    <type name="Magento\Eav\Model\ResourceModel\Entity\Attribute">
+        <plugin name="data-exporter-schedule-product-update-on-attribute-option-label-change" type="Magento\CatalogDataExporter\Plugin\Eav\ResyncProductsOnAttributeOptionLabelChange"/>
+    </type>
     <type name="Magento\DataExporter\Model\FeedMetadataPool">
         <arguments>
             <argument name="classMap" xsi:type="array">
