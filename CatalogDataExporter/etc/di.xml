@@ -66,6 +66,7 @@
                     <item name="2" xsi:type="string">Catalog</item>
                     <item name="3" xsi:type="string">Search</item>
                     <item name="4" xsi:type="string">Catalog, Search</item>
+                    <item name="_" xsi:type="string">Not Visible Individually</item>
                 </item>
                 <item name="status" xsi:type="array">
                     <item name="1" xsi:type="string">Enabled</item>

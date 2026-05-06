@@ -29,6 +29,10 @@ class ResyncProductsOnAttributeOptionLabelChange
     private const PRODUCTS_FEED_INDEXER = 'catalog_data_exporter_products';
     private const AFFECTED_PRODUCTS_THRESHOLD = 1000;
 
+    private const FRONTEND_INPUT_SELECT = 'select';
+    private const FRONTEND_INPUT_MULTISELECT = 'multiselect';
+    private const SUPPORTED_FRONTEND_INPUTS = [self::FRONTEND_INPUT_SELECT, self::FRONTEND_INPUT_MULTISELECT];
+
     private ?int $productEntityTypeId = null;
 
     /**
@@ -77,17 +81,11 @@ class ResyncProductsOnAttributeOptionLabelChange
 
         if ($oldLabels !== null) {
             try {
-                $attributeId = (int) $object->getAttributeId();
                 [$changedOptionIds, $changedStoreIds] = $this->detectChanges(
                     $oldLabels,
-                    $this->loadOptionLabels($attributeId)
+                    $this->loadOptionLabels((int) $object->getAttributeId())
                 );
-                $this->scheduleProductFeedUpdate(
-                    $attributeId,
-                    (string) $object->getBackendTable(),
-                    $changedOptionIds,
-                    $changedStoreIds
-                );
+                $this->scheduleProductFeedUpdate($object, $changedOptionIds, $changedStoreIds);
             } catch (\Throwable $e) {
                 $this->logError($object, $e);
             }
@@ -108,7 +106,7 @@ class ResyncProductsOnAttributeOptionLabelChange
         if ($object->isObjectNew()) {
             return false;
         }
-        if ((string) $object->getBackendType() !== 'int') {
+        if (!\in_array((string) $object->getFrontendInput(), self::SUPPORTED_FRONTEND_INPUTS, true)) {
             return false;
         }
         return $this->isProductAttribute($object);
@@ -201,20 +199,18 @@ class ResyncProductsOnAttributeOptionLabelChange
      * Either invalidate the product feed indexer or insert affected product ids into the changelog,
      * depending on how many products carry any of the changed option ids.
      *
-     * @param int $attributeId
-     * @param string $backendTable
+     * @param AbstractModel $attribute
      * @param int[] $changedOptionIds
      * @param int[] $changedStoreIds
      *
      * @return void
      */
     private function scheduleProductFeedUpdate(
-        int $attributeId,
-        string $backendTable,
+        AbstractModel $attribute,
         array $changedOptionIds,
         array $changedStoreIds
     ): void {
-        if ($backendTable === '' || empty($changedOptionIds)) {
+        if ((string) $attribute->getBackendTable() === '' || empty($changedOptionIds)) {
             return;
         }
 
@@ -234,13 +230,13 @@ class ResyncProductsOnAttributeOptionLabelChange
         }
 
         $linkField = $this->metadataPool->getMetadata(ProductInterface::class)->getLinkField();
-        $affectedProductCount = $this->countAffectedProducts(
-            $attributeId,
-            $backendTable,
+        $affectedProductsSelect = $this->buildAffectedProductsSelect(
+            $attribute,
             $linkField,
             $changedOptionIds,
             $storeIds
         );
+        $affectedProductCount = $this->countAffectedProducts($affectedProductsSelect);
         if ($affectedProductCount <= 0) {
             return;
         }
@@ -249,18 +245,14 @@ class ResyncProductsOnAttributeOptionLabelChange
             $indexer->invalidate();
         } else {
             $this->addProductIdsToChangelog(
-                $attributeId,
-                $backendTable,
-                $linkField,
-                $changedOptionIds,
-                $storeIds,
+                $affectedProductsSelect,
                 (string) $indexer->getView()->getChangelog()->getName()
             );
         }
 
         $this->logger->info(sprintf(
             'Attribute option label change detected. Attribute id: %d, affected products: %d. %s.',
-            $attributeId,
+            (int) $attribute->getAttributeId(),
             $affectedProductCount,
             $affectedProductCount > self::AFFECTED_PRODUCTS_THRESHOLD
                 ? 'Full resync scheduled'
@@ -269,35 +261,16 @@ class ResyncProductsOnAttributeOptionLabelChange
     }
 
     /**
-     * Count products affected by option changes.
+     * Count distinct affected products, capped at threshold + 1.
      *
-     * Count distinct products carrying any of the changed option ids, capped by threshold + 1.
-     *
-     * @param int $attributeId
-     * @param string $backendTable
-     * @param string $linkField
-     * @param int[] $changedOptionIds
-     * @param int[] $storeIds
+     * @param \Magento\Framework\DB\Select $affectedProductsSelect
      *
      * @return int
      */
-    private function countAffectedProducts(
-        int $attributeId,
-        string $backendTable,
-        string $linkField,
-        array $changedOptionIds,
-        array $storeIds
-    ): int {
+    private function countAffectedProducts(\Magento\Framework\DB\Select $affectedProductsSelect): int
+    {
         $connection = $this->resourceConnection->getConnection();
-
-        $innerSelect = $this->buildAffectedProductsSelect(
-            $attributeId,
-            $backendTable,
-            $linkField,
-            $changedOptionIds,
-            $storeIds
-        )->limit(self::AFFECTED_PRODUCTS_THRESHOLD + 1);
-
+        $innerSelect = (clone $affectedProductsSelect)->limit(self::AFFECTED_PRODUCTS_THRESHOLD + 1);
         $countSelect = $connection->select()
             ->from(['t' => $innerSelect], [new Expression('COUNT(1)')]);
 
@@ -305,39 +278,21 @@ class ResyncProductsOnAttributeOptionLabelChange
     }
 
     /**
-     * Add affected product ids to the product feed changelog.
+     * Insert distinct affected product ids into the product feed changelog (single query).
      *
-     * Insert distinct product ids carrying any of the changed option ids into the product feed changelog.
-     *
-     * @param int $attributeId
-     * @param string $backendTable
-     * @param string $linkField
-     * @param int[] $changedOptionIds
-     * @param int[] $storeIds
+     * @param \Magento\Framework\DB\Select $affectedProductsSelect
      * @param string $changelogTableName
      *
      * @return void
      */
     private function addProductIdsToChangelog(
-        int $attributeId,
-        string $backendTable,
-        string $linkField,
-        array $changedOptionIds,
-        array $storeIds,
+        \Magento\Framework\DB\Select $affectedProductsSelect,
         string $changelogTableName
     ): void {
         $connection = $this->resourceConnection->getConnection();
-        $select = $this->buildAffectedProductsSelect(
-            $attributeId,
-            $backendTable,
-            $linkField,
-            $changedOptionIds,
-            $storeIds
-        );
-
         $connection->query(
             $connection->insertFromSelect(
-                $select,
+                $affectedProductsSelect,
                 $this->resourceConnection->getTableName($changelogTableName),
                 ['entity_id']
             )
@@ -345,12 +300,14 @@ class ResyncProductsOnAttributeOptionLabelChange
     }
 
     /**
-     * Build database select for affected products.
+     * Build the affected-products select - dispatches on frontend_input.
      *
-     * Build the affected-products select used for both the count and the changelog insert.
+     * Select attributes (int backend) use a direct `value IN (?)` which hits the
+     * (attribute_id, value) index on catalog_product_entity_int. Multiselect
+     * attributes (varchar backend, comma-separated option ids) use FIND_IN_SET
+     * because no index can be used against a CSV.
      *
-     * @param int $attributeId
-     * @param string $backendTable
+     * @param AbstractModel $attribute
      * @param string $linkField
      * @param int[] $changedOptionIds
      * @param int[] $storeIds
@@ -358,15 +315,35 @@ class ResyncProductsOnAttributeOptionLabelChange
      * @return \Magento\Framework\DB\Select
      */
     private function buildAffectedProductsSelect(
-        int $attributeId,
-        string $backendTable,
+        AbstractModel $attribute,
+        string $linkField,
+        array $changedOptionIds,
+        array $storeIds
+    ): \Magento\Framework\DB\Select {
+        return (string) $attribute->getFrontendInput() === self::FRONTEND_INPUT_MULTISELECT
+            ? $this->buildAffectedMultiselectProductsSelect($attribute, $linkField, $changedOptionIds, $storeIds)
+            : $this->buildAffectedSelectProductsSelect($attribute, $linkField, $changedOptionIds, $storeIds);
+    }
+
+    /**
+     * Build the affected-products select for `select` attributes (int backend).
+     *
+     * @param AbstractModel $attribute
+     * @param string $linkField
+     * @param int[] $changedOptionIds
+     * @param int[] $storeIds
+     *
+     * @return \Magento\Framework\DB\Select
+     */
+    private function buildAffectedSelectProductsSelect(
+        AbstractModel $attribute,
         string $linkField,
         array $changedOptionIds,
         array $storeIds
     ): \Magento\Framework\DB\Select {
         $connection = $this->resourceConnection->getConnection();
         $joinCondition = sprintf('eav.%1$s = p.%1$s', $linkField)
-            . $connection->quoteInto(' AND eav.attribute_id = ?', $attributeId)
+            . $connection->quoteInto(' AND eav.attribute_id = ?', (int) $attribute->getAttributeId())
             . $connection->quoteInto(' AND eav.store_id IN (?)', $storeIds);
 
         return $connection->select()
@@ -376,11 +353,54 @@ class ResyncProductsOnAttributeOptionLabelChange
                 ['entity_id' => 'p.entity_id']
             )
             ->joinInner(
-                ['eav' => $this->resourceConnection->getTableName($backendTable)],
+                ['eav' => $this->resourceConnection->getTableName((string) $attribute->getBackendTable())],
                 $joinCondition,
                 []
             )
             ->where('eav.value IN (?)', $changedOptionIds);
+    }
+
+    /**
+     * Build the affected-products select for `multiselect` attributes (varchar backend, CSV value).
+     *
+     * Each changed option id contributes a FIND_IN_SET predicate; the predicates are OR'd.
+     * Number of predicates is bounded by the number of options the admin changed in the save.
+     *
+     * @param AbstractModel $attribute
+     * @param string $linkField
+     * @param int[] $changedOptionIds
+     * @param int[] $storeIds
+     *
+     * @return \Magento\Framework\DB\Select
+     */
+    private function buildAffectedMultiselectProductsSelect(
+        AbstractModel $attribute,
+        string $linkField,
+        array $changedOptionIds,
+        array $storeIds
+    ): \Magento\Framework\DB\Select {
+        $connection = $this->resourceConnection->getConnection();
+        $joinCondition = sprintf('eav.%1$s = p.%1$s', $linkField)
+            . $connection->quoteInto(' AND eav.attribute_id = ?', (int) $attribute->getAttributeId())
+            . $connection->quoteInto(' AND eav.store_id IN (?)', $storeIds);
+
+        $orParts = [];
+        foreach ($changedOptionIds as $optionId) {
+            $orParts[] = $connection->quoteInto('FIND_IN_SET(?, eav.value) > 0', (int) $optionId);
+        }
+
+        return $connection->select()
+            ->distinct()
+            ->from(
+                ['p' => $this->resourceConnection->getTableName('catalog_product_entity')],
+                ['entity_id' => 'p.entity_id']
+            )
+            ->joinInner(
+                ['eav' => $this->resourceConnection->getTableName((string) $attribute->getBackendTable())],
+                $joinCondition,
+                []
+            )
+            ->where(implode(' OR ', $orParts));
     }
 
     /**

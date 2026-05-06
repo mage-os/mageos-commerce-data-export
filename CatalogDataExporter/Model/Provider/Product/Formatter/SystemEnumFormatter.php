@@ -37,8 +37,9 @@ class SystemEnumFormatter implements FormatterInterface
     public function format(array $row): array
     {
         foreach ($this->systemEnums as $enumName => $enumMap) {
-            if (isset($row[$enumName])) {
-                $row[$enumName] = $enumMap[$row[$enumName]] ?? $enumMap['_'] ?? null;
+            if (array_key_exists($enumName, $row)) {
+                $enumKey = $row[$enumName] !== null ? $row[$enumName] : '_';
+                $row[$enumName] = $enumMap[$enumKey] ?? null;
             }
         }
         return $row;

@@ -38,7 +38,6 @@ class ControllableExportFeedStub implements ExportFeedInterface
             ['statusCode' => self::$shouldFail ? 503 : 200]
         );
 
-        print_r($statusCode);
         return Bootstrap::getObjectManager()->create(
             FeedExportStatus::class,
             [
