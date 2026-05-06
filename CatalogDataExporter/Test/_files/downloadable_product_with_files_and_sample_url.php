@@ -30,7 +30,6 @@ $secondWebsite = $websiteRepository->get('test');
 $product = $objectManager->create(\Magento\Catalog\Model\Product::class);
 $product
     ->setTypeId(\Magento\Downloadable\Model\Product\Type::TYPE_DOWNLOADABLE)
-    ->setId(1)
     ->setAttributeSetId(4)
     ->setWebsiteIds([1, $secondWebsite->getId()])
     ->setName('Downloadable Product')
@@ -88,7 +87,7 @@ $linkData = [
     'title' => 'Downloadable Product Link',
     'sample' => [
         'type' => \Magento\Downloadable\Helper\Download::LINK_TYPE_URL,
-        'url' => 'http://sampleUrl.com',
+        'url' => 'http://sampleurl.com',
     ],
     'type' => \Magento\Downloadable\Helper\Download::LINK_TYPE_FILE,
     'is_shareable' => \Magento\Downloadable\Model\Link::LINK_SHAREABLE_CONFIG,
@@ -103,7 +102,7 @@ $linkData = [
 $sampleContent = $objectManager->create(\Magento\Downloadable\Api\Data\File\ContentInterfaceFactory::class)->create();
 $sampleContent->setFileData(
 // @codingStandardsIgnoreLine
-    base64_encode(file_get_contents(__DIR__ . DIRECTORY_SEPARATOR . DIRECTORY_SEPARATOR . 'magento_image.jpg'))
+    base64_encode(file_get_contents(__DIR__ . DIRECTORY_SEPARATOR . 'magento_image.jpg'))
 );
 $sampleContent->setName('jellyfish_1_3.jpg');
 $sampleLink = $linkFactory->create(['data' => $linkData]);
@@ -122,7 +121,7 @@ $sampleLink->setSortOrder(2);
 $content = $objectManager->create(\Magento\Downloadable\Api\Data\File\ContentInterfaceFactory::class)->create();
 $content->setFileData(
 // @codingStandardsIgnoreLine
-    base64_encode(file_get_contents(__DIR__ . DIRECTORY_SEPARATOR . DIRECTORY_SEPARATOR . 'magento_image.jpg'))
+    base64_encode(file_get_contents(__DIR__ . DIRECTORY_SEPARATOR . 'magento_image.jpg'))
 );
 $content->setName('jellyfish_2_4.jpg');
 $sampleLink->setLinkFileContent($content);
@@ -176,7 +175,7 @@ foreach ($downloadableData['sample'] as $sampleData) {
         )->create();
         $content->setFileData(
         // @codingStandardsIgnoreLine
-            base64_encode(file_get_contents(__DIR__ . DIRECTORY_SEPARATOR . DIRECTORY_SEPARATOR . 'magento_image.jpg'))
+            base64_encode(file_get_contents(__DIR__ . DIRECTORY_SEPARATOR . 'magento_image.jpg'))
         );
         $content->setName('jellyfish_1_4.jpg');
         $sample->setSampleFileContent($content);

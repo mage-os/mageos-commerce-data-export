@@ -16,6 +16,7 @@ use Magento\InventoryApi\Api\Data\SourceItemInterface;
 use Magento\InventoryCatalogApi\Api\BulkSourceUnassignInterface;
 use Magento\InventoryCatalogApi\Model\SourceItemsProcessorInterface;
 use Magento\TestFramework\Helper\Bootstrap;
+use PHPUnit\Framework\Attributes\DataProvider;
 
 /**
  * @magentoDbIsolation disabled
@@ -51,7 +52,6 @@ class UnassignProductFromStockTest extends AbstractInventoryTestHelper
     }
 
     /**
-     * @dataProvider stocksUnassignDataProvider
      * @param string $sku
      * @param array $sourcesToLeave
      * @param array $expectedData
@@ -60,6 +60,7 @@ class UnassignProductFromStockTest extends AbstractInventoryTestHelper
      * @throws \Zend_Db_Statement_Exception
      * @magentoDataFixture Magento_InventoryDataExporter::Test/_files/products_with_sources.php
      */
+    #[DataProvider('stocksUnassignDataProvider')]
     public function testSourceItemStockUnassigned(string $sku, array $sourcesToLeave, array $expectedData)
     {
         $sourceItems = $this->getSourcesData($sku, $sourcesToLeave);
@@ -72,7 +73,6 @@ class UnassignProductFromStockTest extends AbstractInventoryTestHelper
     }
 
     /**
-     * @dataProvider stocksBulkUnassignDataProvider
      * @param array $skus
      * @param array $sourcesToUnassign
      * @param array $expectedData
@@ -81,6 +81,7 @@ class UnassignProductFromStockTest extends AbstractInventoryTestHelper
      * @throws \Magento\Framework\Validation\ValidationException
      * @magentoDataFixture Magento_InventoryDataExporter::Test/_files/products_with_sources.php
      */
+    #[DataProvider('stocksBulkUnassignDataProvider')]
     public function testSourceItemsBulkUnassign(array $skus, array $sourcesToUnassign, array $expectedData)
     {
         $this->bulkSourceUnassign->execute(

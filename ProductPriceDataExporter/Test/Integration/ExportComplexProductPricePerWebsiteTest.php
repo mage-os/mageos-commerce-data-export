@@ -8,6 +8,7 @@ declare(strict_types=1);
 namespace Magento\ProductPriceDataExporter\Test\Integration;
 
 use Magento\Framework\Exception\NoSuchEntityException;
+use PHPUnit\Framework\Attributes\DataProvider;
 
 /**
  * Check prices for complex products
@@ -22,10 +23,10 @@ class ExportComplexProductPricePerWebsiteTest extends AbstractProductPriceTestHe
      * @magentoConfigFixture current_store catalog/price/scope 1
      * @magentoDataFixture Magento_ProductPriceDataExporter::Test/_files/configure_website_scope_price.php
      * @magentoDataFixture Magento_ProductPriceDataExporter::Test/_files/bundle_fixed_products.php
-     * @dataProvider expectedBundleFixedProductPricesDataProvider
      * @param array $expectedBundleFixedProductPricesDataProvider
      * @throws NoSuchEntityException
      */
+    #[DataProvider('expectedBundleFixedProductPricesDataProvider')]
     public function testExportBundleFixedProductsPrices(array $expectedBundleFixedProductPricesDataProvider): void
     {
         $this->checkExpectedItemsAreExportedInFeed($expectedBundleFixedProductPricesDataProvider);
@@ -35,10 +36,10 @@ class ExportComplexProductPricePerWebsiteTest extends AbstractProductPriceTestHe
      * @magentoConfigFixture current_store catalog/price/scope 1
      * @magentoDataFixture Magento_ProductPriceDataExporter::Test/_files/configure_website_scope_price.php
      * @magentoDataFixture Magento_ProductPriceDataExporter::Test/_files/bundle_dynamic_products.php
-     * @dataProvider expectedBundleDynamicProductPricesDataProvider
      * @param array $expectedBundleDynamicProductPricesDataProvider
      * @throws NoSuchEntityException
      */
+    #[DataProvider('expectedBundleDynamicProductPricesDataProvider')]
     public function testExportBundleDynamicProductsPrices(array $expectedBundleDynamicProductPricesDataProvider): void
     {
         $this->checkExpectedItemsAreExportedInFeed($expectedBundleDynamicProductPricesDataProvider);
@@ -48,10 +49,10 @@ class ExportComplexProductPricePerWebsiteTest extends AbstractProductPriceTestHe
      * @magentoConfigFixture current_store catalog/price/scope 1
      * @magentoDataFixture Magento_ProductPriceDataExporter::Test/_files/configure_website_scope_price.php
      * @magentoDataFixture Magento_ProductPriceDataExporter::Test/_files/configurable_regular_price_products.php
-     * @dataProvider expectedConfigurableRegularProductPricesDataProvider
      * @param array $expectedProductPricesDataProvider
      * @throws NoSuchEntityException
      */
+    #[DataProvider('expectedConfigurableRegularProductPricesDataProvider')]
     public function testExportConfigurableProductsRegularPrices(array $expectedProductPricesDataProvider): void
     {
         $this->checkExpectedItemsAreExportedInFeed($expectedProductPricesDataProvider);
@@ -61,10 +62,10 @@ class ExportComplexProductPricePerWebsiteTest extends AbstractProductPriceTestHe
      * @magentoConfigFixture current_store catalog/price/scope 1
      * @magentoDataFixture Magento_ProductPriceDataExporter::Test/_files/configure_website_scope_price.php
      * @magentoDataFixture Magento_ProductPriceDataExporter::Test/_files/configurable_special_and_tier_price_products.php
-     * @dataProvider expectedConfigurableSpecialAndTierProductPricesDataProvider
      * @param array $expectedProductPricesDataProvider
      * @throws NoSuchEntityException
      */
+    #[DataProvider('expectedConfigurableSpecialAndTierProductPricesDataProvider')]
     public function testExportConfigurableProductsSpecialAndTierPrices(array $expectedProductPricesDataProvider): void
     {
         $this->checkExpectedItemsAreExportedInFeed($expectedProductPricesDataProvider);
@@ -74,10 +75,10 @@ class ExportComplexProductPricePerWebsiteTest extends AbstractProductPriceTestHe
      * @magentoConfigFixture current_store catalog/price/scope 1
      * @magentoDataFixture Magento_ProductPriceDataExporter::Test/_files/configure_website_scope_price.php
      * @magentoDataFixture Magento_ProductPriceDataExporter::Test/_files/grouped_products_regular_prices.php
-     * @dataProvider expectedGroupedProductRegularPriceDataProvider
      * @param array $expectedProductPricesDataProvider
      * @throws NoSuchEntityException
      */
+    #[DataProvider('expectedGroupedProductRegularPriceDataProvider')]
     public function testExportGroupedProductsRegularPrices(array $expectedProductPricesDataProvider): void
     {
         $this->checkExpectedItemsAreExportedInFeed($expectedProductPricesDataProvider);
@@ -87,10 +88,10 @@ class ExportComplexProductPricePerWebsiteTest extends AbstractProductPriceTestHe
      * @magentoConfigFixture current_store catalog/price/scope 1
      * @magentoDataFixture Magento_ProductPriceDataExporter::Test/_files/configure_website_scope_price.php
      * @magentoDataFixture Magento_ProductPriceDataExporter::Test/_files/grouped_products_special_and_tier_prices.php
-     * @dataProvider expectedGroupedSpecialAndTierProductPricesDataProvider
      * @param array $expectedProductPricesDataProvider
      * @throws NoSuchEntityException
      */
+    #[DataProvider('expectedGroupedSpecialAndTierProductPricesDataProvider')]
     public function testExportGroupedProductsSpecialAndTierPrices(array $expectedProductPricesDataProvider): void
     {
         $this->checkExpectedItemsAreExportedInFeed($expectedProductPricesDataProvider);
@@ -158,7 +159,7 @@ class ExportComplexProductPricePerWebsiteTest extends AbstractProductPriceTestHe
                         'discounts' => [0 => ['code' => 'group', 'percentage' => 15.15]],
                         'tierPrices' => [
                             0 => [
-                                'quantity' => 2,
+                                'qty' => 2,
                                 'percentage' => 14.14
                             ]
                         ],
@@ -182,7 +183,7 @@ class ExportComplexProductPricePerWebsiteTest extends AbstractProductPriceTestHe
                         'discounts' => [0 => ['code' => 'group', 'percentage' => 13.13]],
                         'tierPrices' => [
                             0 => [
-                                'quantity' => 2.55,
+                                'qty' => 2.55,
                                 'percentage' => 12.12
                             ]
                         ],
@@ -256,7 +257,7 @@ class ExportComplexProductPricePerWebsiteTest extends AbstractProductPriceTestHe
                         'discounts' => [0 => ['code' => 'group', 'percentage' => 15.15]],
                         'tierPrices' => [
                             0 => [
-                                'quantity' => 2,
+                                'qty' => 2,
                                 'percentage' => 14.14
                             ]
                         ],
@@ -280,7 +281,7 @@ class ExportComplexProductPricePerWebsiteTest extends AbstractProductPriceTestHe
                         'discounts' => [0 => ['code' => 'group', 'percentage' => 13.13]],
                         'tierPrices' => [
                             0 => [
-                                'quantity' => 2.55,
+                                'qty' => 2.55,
                                 'percentage' => 12.12
                             ]
                         ],
@@ -511,7 +512,7 @@ class ExportComplexProductPricePerWebsiteTest extends AbstractProductPriceTestHe
                         'discounts' => null,
                         'tierPrices' => [
                             0 => [
-                                'quantity' => 2,
+                                'qty' => 2,
                                 'price' => 16.16
                             ]
                         ],
@@ -527,7 +528,7 @@ class ExportComplexProductPricePerWebsiteTest extends AbstractProductPriceTestHe
                         'discounts' => [0 => ['code' => 'group', 'price' => 15.15]],
                         'tierPrices' => [
                             0 => [
-                                'quantity' => 2,
+                                'qty' => 2,
                                 'price' => 16.16
                             ]
                         ],
@@ -553,7 +554,7 @@ class ExportComplexProductPricePerWebsiteTest extends AbstractProductPriceTestHe
                         'discounts' => [0 => ['code' => 'group', 'price' => 14.14]],
                         'tierPrices' => [
                             0 => [
-                                'quantity' => 2.55,
+                                'qty' => 2.55,
                                 'price' => 13.13
                             ]
                         ],

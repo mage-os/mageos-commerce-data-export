@@ -14,6 +14,7 @@ use Magento\Framework\Exception\StateException;
 use Magento\Store\Api\StoreRepositoryInterface;
 use Magento\Store\Api\WebsiteRepositoryInterface;
 use Magento\Store\Model\StoreIsInactiveException;
+use PHPUnit\Framework\Attributes\DataProvider;
 
 /**
  * Check prices for single (non-complex) products with update operations
@@ -30,13 +31,13 @@ class ExportSingleProductPriceUpdateOperationsTest extends AbstractProductPriceT
      * @magentoDataFixture Magento_ProductPriceDataExporter::Test/_files/configure_website_scope_price.php
      * @magentoDataFixture Magento_ProductPriceDataExporter::Test/_files/catalog_data_exporter_product_prices_indexer_update_on_schedule.php
      * @magentoDataFixture Magento_ProductPriceDataExporter::Test/_files/simple_products_all_websites_grouped_price.php
-     * @dataProvider expectedSimpleProductPricesUnassignedWebsiteDataProvider
      * @param array $expectedSimpleProductPrices
      * @throws NoSuchEntityException
      * @throws CouldNotSaveException
      * @throws InputException
      * @throws StateException
      */
+    #[DataProvider('expectedSimpleProductPricesUnassignedWebsiteDataProvider')]
     public function testUnassignProductFromWebsite(array $expectedSimpleProductPrices): void
     {
         $product = $this->productRepository->get('simple_product_with_tier_price');
@@ -52,13 +53,13 @@ class ExportSingleProductPriceUpdateOperationsTest extends AbstractProductPriceT
      * @magentoDataFixture Magento_ProductPriceDataExporter::Test/_files/configure_website_scope_price.php
      * @magentoDataFixture Magento_ProductPriceDataExporter::Test/_files/catalog_data_exporter_product_prices_indexer_update_on_schedule.php
      * @magentoDataFixture Magento_ProductPriceDataExporter::Test/_files/simple_products_all_websites_grouped_price.php
-     * @dataProvider expectedSimpleProductDisabledGlobalDataProvider
      * @param array $expectedSimpleProductPrices
      * @throws CouldNotSaveException
      * @throws InputException
      * @throws NoSuchEntityException
      * @throws StateException
      */
+    #[DataProvider('expectedSimpleProductDisabledGlobalDataProvider')]
     public function testDisableProductGlobally(array $expectedSimpleProductPrices): void
     {
         //Get product for edit in general scope (all websites)
@@ -74,7 +75,6 @@ class ExportSingleProductPriceUpdateOperationsTest extends AbstractProductPriceT
      * @magentoDataFixture Magento_ProductPriceDataExporter::Test/_files/configure_website_scope_price.php
      * @magentoDataFixture Magento_ProductPriceDataExporter::Test/_files/catalog_data_exporter_product_prices_indexer_update_on_schedule.php
      * @magentoDataFixture Magento_ProductPriceDataExporter::Test/_files/simple_products_all_websites_grouped_price.php
-     * @dataProvider expectedSimpleProductEnabledOneStoreDataProvider
      * @param array $expectedSimpleProductPrices
      * @throws CouldNotSaveException
      * @throws InputException
@@ -82,6 +82,7 @@ class ExportSingleProductPriceUpdateOperationsTest extends AbstractProductPriceT
      * @throws StateException
      * @throws StoreIsInactiveException
      */
+    #[DataProvider('expectedSimpleProductEnabledOneStoreDataProvider')]
     public function testEnableProductOnWebsite(array $expectedSimpleProductPrices): void
     {
         //Get product for edit in general scope (all websites)
@@ -109,7 +110,6 @@ class ExportSingleProductPriceUpdateOperationsTest extends AbstractProductPriceT
      * @magentoDataFixture Magento_ProductPriceDataExporter::Test/_files/configure_website_scope_price.php
      * @magentoDataFixture Magento_ProductPriceDataExporter::Test/_files/catalog_data_exporter_product_prices_indexer_update_on_schedule.php
      * @magentoDataFixture Magento_ProductPriceDataExporter::Test/_files/simple_products_all_websites_grouped_price.php
-     * @dataProvider expectedSimpleProductEnabledOneStoreDataProvider
      * @param array $expectedSimpleProductPrices
      * @throws CouldNotSaveException
      * @throws InputException
@@ -117,6 +117,7 @@ class ExportSingleProductPriceUpdateOperationsTest extends AbstractProductPriceT
      * @throws StateException
      * @throws StoreIsInactiveException
      */
+    #[DataProvider('expectedSimpleProductEnabledOneStoreDataProvider')]
     public function testUpdateProductPriceOnSecondStore(array $expectedSimpleProductPrices): void
     {
         //Get product for edit in general scope (all websites)
@@ -147,13 +148,13 @@ class ExportSingleProductPriceUpdateOperationsTest extends AbstractProductPriceT
      * @magentoDataFixture Magento_ProductPriceDataExporter::Test/_files/configure_website_scope_price.php
      * @magentoDataFixture Magento_ProductPriceDataExporter::Test/_files/catalog_data_exporter_product_prices_indexer_update_on_schedule.php
      * @magentoDataFixture Magento_ProductPriceDataExporter::Test/_files/simple_products_all_websites_grouped_price.php
-     * @dataProvider expectedSimpleProductPricesReassignProductsToWebsiteDataProvider
      * @param array $expectedSimpleProductPrices
      * @throws CouldNotSaveException
      * @throws InputException
      * @throws NoSuchEntityException
      * @throws StateException
      */
+    #[DataProvider('expectedSimpleProductPricesReassignProductsToWebsiteDataProvider')]
     public function testReassignProductToWebsite(array $expectedSimpleProductPrices): void
     {
         $product = $this->productRepository->get('simple_product_with_tier_price');
@@ -172,9 +173,9 @@ class ExportSingleProductPriceUpdateOperationsTest extends AbstractProductPriceT
      * @magentoConfigFixture current_store catalog/price/scope 1
      * @magentoDataFixture Magento_ProductPriceDataExporter::Test/_files/catalog_data_exporter_product_prices_indexer_update_on_schedule.php
      * @magentoDataFixture Magento_ProductPriceDataExporter::Test/_files/simple_products.php
-     * @dataProvider expectedSimpleProductPricesUnassignedGroupPriceDataProvider
      * @SuppressWarnings(PHPMD.UnusedFormalParameter)
      */
+    #[DataProvider('expectedSimpleProductPricesUnassignedGroupPriceDataProvider')]
     public function testUnassignGroupPriceFromProduct(array $expectedSimpleProductPrices): void
     {
         //TODO: Need to be covered
@@ -184,9 +185,9 @@ class ExportSingleProductPriceUpdateOperationsTest extends AbstractProductPriceT
      * @magentoConfigFixture current_store catalog/price/scope 1
      * @magentoDataFixture Magento_ProductPriceDataExporter::Test/_files/catalog_data_exporter_product_prices_indexer_update_on_schedule.php
      * @magentoDataFixture Magento_ProductPriceDataExporter::Test/_files/simple_products.php
-     * @dataProvider expectedSimpleProductPricesReassignGroupPricesDataProvider
      * @SuppressWarnings(PHPMD.UnusedFormalParameter)
      */
+    #[DataProvider('expectedSimpleProductPricesReassignGroupPricesDataProvider')]
     public function testReassignGroupPriceToProduct(array $expectedSimpleProductPrices): void
     {
         //TODO: Need to be covered
@@ -499,7 +500,7 @@ class ExportSingleProductPriceUpdateOperationsTest extends AbstractProductPriceT
     ): array {
         foreach ($expectedSimpleProductPrices as &$expectedSimpleProductPrice) {
             if ($expectedSimpleProductPrice['websiteCode'] === $websiteCode) {
-                $expectedSimpleProductPrice['regular'] = $price;
+                $expectedSimpleProductPrice['regular'] = (float)$price;
             }
         }
 

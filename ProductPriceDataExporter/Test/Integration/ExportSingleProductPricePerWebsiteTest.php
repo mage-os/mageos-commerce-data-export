@@ -9,6 +9,7 @@ namespace Magento\ProductPriceDataExporter\Test\Integration;
 
 use Magento\Framework\Exception\NoSuchEntityException;
 use Magento\Store\Api\StoreRepositoryInterface;
+use PHPUnit\Framework\Attributes\DataProvider;
 
 /**
  * Check prices for single (non-complex) products
@@ -33,10 +34,10 @@ class ExportSingleProductPricePerWebsiteTest extends AbstractProductPriceTestHel
      * @magentoConfigFixture current_store catalog/price/scope 1
      * @magentoDataFixture Magento_ProductPriceDataExporter::Test/_files/configure_website_scope_price.php
      * @magentoDataFixture Magento_ProductPriceDataExporter::Test/_files/simple_products.php
-     * @dataProvider expectedSimpleProductPricesDataProvider
      * @param array $expectedSimpleProductPrices
      * @throws NoSuchEntityException
      */
+    #[DataProvider('expectedSimpleProductPricesDataProvider')]
     public function testExportSimpleProductsPrices(array $expectedSimpleProductPrices): void
     {
         $this->checkExpectedItemsAreExportedInFeed($expectedSimpleProductPrices);
@@ -46,10 +47,10 @@ class ExportSingleProductPricePerWebsiteTest extends AbstractProductPriceTestHel
      * @magentoConfigFixture current_store catalog/price/scope 1
      * @magentoDataFixture Magento_ProductPriceDataExporter::Test/_files/configure_website_scope_price.php
      * @magentoDataFixture Magento_ProductPriceDataExporter::Test/_files/simple_products.php
-     * @dataProvider expectedSimpleProductRegularPricesUseDefaultDataProvider
      * @param array $expectedSimpleProductPrices
      * @throws NoSuchEntityException
      */
+    #[DataProvider('expectedSimpleProductRegularPricesUseDefaultDataProvider')]
     public function testExportSimpleProductsRegularPricesWithUseDefault(array $expectedSimpleProductPrices): void
     {
         $firstStoreId = $this->storeRepository->get('default')->getId();
@@ -71,10 +72,10 @@ class ExportSingleProductPricePerWebsiteTest extends AbstractProductPriceTestHel
      * @magentoConfigFixture current_store catalog/price/scope 1
      * @magentoDataFixture Magento_ProductPriceDataExporter::Test/_files/configure_website_scope_price.php
      * @magentoDataFixture Magento_ProductPriceDataExporter::Test/_files/simple_products.php
-     * @dataProvider expectedSimpleProductSpecialPricesDoNotUseDefaultDataProvider
      * @param array $expectedSimpleProductPrices
      * @throws NoSuchEntityException
      */
+    #[DataProvider('expectedSimpleProductSpecialPricesDoNotUseDefaultDataProvider')]
     public function testExportSimpleProductsPricesWithoutUseDefault(array $expectedSimpleProductPrices): void
     {
         $firstStoreId = $this->storeRepository->get('default')->getId();
@@ -105,10 +106,10 @@ class ExportSingleProductPricePerWebsiteTest extends AbstractProductPriceTestHel
      * @magentoConfigFixture current_store catalog/price/scope 1
      * @magentoDataFixture Magento_ProductPriceDataExporter::Test/_files/configure_website_scope_price.php
      * @magentoDataFixture Magento_ProductPriceDataExporter::Test/_files/simple_products.php
-     * @dataProvider expectedSimpleProductSpecialPricesUseDefaultDataProvider
      * @param array $expectedSimpleProductPrices
      * @throws NoSuchEntityException
      */
+    #[DataProvider('expectedSimpleProductSpecialPricesUseDefaultDataProvider')]
     public function testExportSimpleProductsPricesWithUseDefault(array $expectedSimpleProductPrices): void
     {
         $firstStoreId = $this->storeRepository->get('default')->getId();
@@ -138,10 +139,10 @@ class ExportSingleProductPricePerWebsiteTest extends AbstractProductPriceTestHel
      * @magentoConfigFixture current_store catalog/price/scope 1
      * @magentoDataFixture Magento_ProductPriceDataExporter::Test/_files/configure_website_scope_price.php
      * @magentoDataFixture Magento_ProductPriceDataExporter::Test/_files/downloadable_products.php
-     * @dataProvider expectedDownloadableProductPricesDataProvider
      * @param array $expectedDownloadableProductPricesDataProvider
      * @throws NoSuchEntityException
      */
+    #[DataProvider('expectedDownloadableProductPricesDataProvider')]
     public function testExportDownloadableProductsPrices(array $expectedDownloadableProductPricesDataProvider): void
     {
         $this->checkExpectedItemsAreExportedInFeed($expectedDownloadableProductPricesDataProvider);

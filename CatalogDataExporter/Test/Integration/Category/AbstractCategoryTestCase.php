@@ -24,7 +24,7 @@ use Magento\Framework\Serialize\Serializer\Json;
 /**
  * Abstract class for category feed tests
  */
-abstract class AbstractCategoryTest extends TestCase
+abstract class AbstractCategoryTestCase extends TestCase
 {
     /**
      * Category feed indexer id

@@ -12,6 +12,7 @@ use Magento\Framework\Exception\NoSuchEntityException;
 use Magento\Framework\ObjectManagerInterface;
 use Magento\Store\Api\WebsiteRepositoryInterface;
 use Magento\TestFramework\Helper\Bootstrap;
+use PHPUnit\Framework\Attributes\DataProvider;
 
 /**
  * Test class for simple product export with unassigned websites
@@ -49,8 +50,8 @@ class SimpleProductsWebsiteUnassignTest extends AbstractProductTestHelper
      * @throws \Magento\Framework\Exception\InputException
      * @throws \Magento\Framework\Exception\StateException
      * @throws \Zend_Db_Statement_Exception
-     * @dataProvider unassignWebsitesDataProvider
      */
+    #[DataProvider('unassignWebsitesDataProvider')]
     public function testSimpleProductsOnSave(array $testData) : void
     {
         /** @var WebsiteRepositoryInterface $websiteRepository */
@@ -90,8 +91,8 @@ class SimpleProductsWebsiteUnassignTest extends AbstractProductTestHelper
      * @return void
      * @throws NoSuchEntityException
      * @throws \Zend_Db_Statement_Exception
-     * @dataProvider bulkUnassignWebsitesDataProvider
      */
+    #[DataProvider('bulkUnassignWebsitesDataProvider')]
     public function testSimpleProductsOnBulkUpdate(array $skus, array $websites, array $expected) : void
     {
         /** @var WebsiteRepositoryInterface $websiteRepository */

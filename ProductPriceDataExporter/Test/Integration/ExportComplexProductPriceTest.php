@@ -8,6 +8,7 @@ declare(strict_types=1);
 namespace Magento\ProductPriceDataExporter\Test\Integration;
 
 use Magento\Framework\Exception\NoSuchEntityException;
+use PHPUnit\Framework\Attributes\DataProvider;
 use Zend_Db_Statement_Exception;
 
 /**
@@ -21,10 +22,10 @@ class ExportComplexProductPriceTest extends AbstractProductPriceTestHelper
 {
     /**
      * @magentoDataFixture Magento_ProductPriceDataExporter::Test/_files/bundle_fixed_products.php
-     * @dataProvider expectedBundleFixedProductPricesDataProvider
      * @throws NoSuchEntityException
      * @throws Zend_Db_Statement_Exception
      */
+    #[DataProvider('expectedBundleFixedProductPricesDataProvider')]
     public function testExportBundleFixedProductsPrices(array $expectedBundleFixedProductPricesDataProvider): void
     {
         $this->checkExpectedItemsAreExportedInFeed($expectedBundleFixedProductPricesDataProvider);
@@ -32,10 +33,10 @@ class ExportComplexProductPriceTest extends AbstractProductPriceTestHelper
 
     /**
      * @magentoDataFixture Magento_ProductPriceDataExporter::Test/_files/bundle_dynamic_products.php
-     * @dataProvider expectedBundleDynamicProductPricesDataProvider
      * @throws NoSuchEntityException
      * @throws Zend_Db_Statement_Exception
      */
+    #[DataProvider('expectedBundleDynamicProductPricesDataProvider')]
     public function testExportBundleDynamicProductsPrices(array $expectedBundleDynamicProductPricesDataProvider): void
     {
         $this->checkExpectedItemsAreExportedInFeed($expectedBundleDynamicProductPricesDataProvider);
@@ -43,10 +44,10 @@ class ExportComplexProductPriceTest extends AbstractProductPriceTestHelper
 
     /**
      * @magentoDataFixture Magento_ProductPriceDataExporter::Test/_files/configurable_regular_price_products.php
-     * @dataProvider expectedConfigurableRegularProductPricesDataProvider
      * @throws NoSuchEntityException
      * @throws Zend_Db_Statement_Exception
      */
+    #[DataProvider('expectedConfigurableRegularProductPricesDataProvider')]
     public function testExportConfigurableProductsRegularPrices(array $expectedProductPricesDataProvider): void
     {
         $this->checkExpectedItemsAreExportedInFeed($expectedProductPricesDataProvider);
@@ -54,10 +55,10 @@ class ExportComplexProductPriceTest extends AbstractProductPriceTestHelper
 
     /**
      * @magentoDataFixture Magento_ProductPriceDataExporter::Test/_files/configurable_special_and_tier_price_products.php
-     * @dataProvider expectedConfigurableSpecialAndTierProductPricesDataProvider
      * @throws NoSuchEntityException
      * @throws Zend_Db_Statement_Exception
      */
+    #[DataProvider('expectedConfigurableSpecialAndTierProductPricesDataProvider')]
     public function testExportConfigurableProductsSpecialAndTierPrices(array $expectedProductPricesDataProvider): void
     {
         $this->checkExpectedItemsAreExportedInFeed($expectedProductPricesDataProvider);
@@ -65,10 +66,10 @@ class ExportComplexProductPriceTest extends AbstractProductPriceTestHelper
 
     /**
      * @magentoDataFixture Magento_ProductPriceDataExporter::Test/_files/grouped_products_regular_prices.php
-     * @dataProvider expectedGroupedProductRegularPriceDataProvider
      * @throws NoSuchEntityException
      * @throws Zend_Db_Statement_Exception
      */
+    #[DataProvider('expectedGroupedProductRegularPriceDataProvider')]
     public function testExportGroupedProductsRegularPrices(array $expectedProductPricesDataProvider): void
     {
         $this->checkExpectedItemsAreExportedInFeed($expectedProductPricesDataProvider);
@@ -76,10 +77,10 @@ class ExportComplexProductPriceTest extends AbstractProductPriceTestHelper
 
     /**
      * @magentoDataFixture Magento_ProductPriceDataExporter::Test/_files/grouped_products_special_and_tier_prices.php
-     * @dataProvider expectedGroupedSpecialAndTierProductPricesDataProvider
      * @throws NoSuchEntityException
      * @throws Zend_Db_Statement_Exception
      */
+    #[DataProvider('expectedGroupedSpecialAndTierProductPricesDataProvider')]
     public function testExportGroupedProductsSpecialAndTierPrices(array $expectedProductPricesDataProvider): void
     {
         $this->checkExpectedItemsAreExportedInFeed($expectedProductPricesDataProvider);
@@ -414,7 +415,7 @@ class ExportComplexProductPriceTest extends AbstractProductPriceTestHelper
                         'websiteCode' => 'base',
                         'regular' => 0,
                         'discounts' => [0 => ['code' => 'group', 'percentage' => 15.15]],
-                        'tierPrices' => [0 => ['qty' => 2, 'price' => 14.14]],
+                        'tierPrices' => [0 => ['qty' => 2, 'percentage' => 14.14]],
                         'deleted' => false,
                         'type' => 'BUNDLE_DYNAMIC'
                     ],
@@ -433,7 +434,7 @@ class ExportComplexProductPriceTest extends AbstractProductPriceTestHelper
                         'websiteCode' => 'test',
                         'regular' => 0,
                         'discounts' => [0 => ['code' => 'group', 'percentage' => 13.13]],
-                        'tierPrices' => [0 => ['qty' => 2.55, 'price' => 12.12]],
+                        'tierPrices' => [0 => ['qty' => 2.55, 'percentage' => 12.12]],
                         'deleted' => false,
                         'type' => 'BUNDLE_DYNAMIC'
                     ],

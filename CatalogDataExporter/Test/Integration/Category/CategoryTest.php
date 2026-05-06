@@ -13,7 +13,7 @@ use Magento\Framework\Exception\NoSuchEntityException;
 /**
  * Test class for category feed
  */
-class CategoryTest extends AbstractCategoryTest
+class CategoryTest extends AbstractCategoryTestCase
 {
     /**
      * Validate categories in different store views

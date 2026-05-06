@@ -19,6 +19,7 @@ use Magento\SaaSCatalog\Cron\ProductSubmitFeed;
 use Magento\SaaSCommon\Cron\SubmitFeedInterface;
 use Magento\SaaSCommon\Test\Integration\ExportFeedStub;
 use Magento\TestFramework\Helper\Bootstrap;
+use PHPUnit\Framework\Attributes\DataProvider;
 
 /**
  * Test class to check that only feeds with "resyncable" statuses would be re-submitted
@@ -85,13 +86,13 @@ class ResubmitFailedFeedTest extends AbstractProductTestHelper
      * @magentoConfigFixture services_connector/services_connector_integration/production_api_key test_key
      * @magentoConfigFixture services_connector/services_connector_integration/production_private_key private_test_key
      * @magentoDataFixture Magento_CatalogDataExporter::Test/_files/setup_simple_products.php
-     * @dataProvider productsWithStatusesDataProvider
      *
      * @param array $expectedProducts
      * @return void
      * @throws NoSuchEntityException
      * @throws \Zend_Db_Statement_Exception
      */
+    #[DataProvider('productsWithStatusesDataProvider')]
     public function testResubmitFailedFeed(array $expectedProducts) : void
     {
         $this->updateFeeds($expectedProducts);

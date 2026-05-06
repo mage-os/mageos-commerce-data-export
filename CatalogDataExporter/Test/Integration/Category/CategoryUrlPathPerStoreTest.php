@@ -23,7 +23,7 @@ use Magento\Framework\Exception\NoSuchEntityException;
  *
  * @magentoAppArea adminhtml
  */
-class CategoryUrlPathPerStoreTest extends AbstractCategoryTest
+class CategoryUrlPathPerStoreTest extends AbstractCategoryTestCase
 {
     private const PARENT_CAT_ID = 830;
     private const CHILD_CAT_ID  = 831;
