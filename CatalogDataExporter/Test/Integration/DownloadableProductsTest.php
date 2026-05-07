@@ -12,6 +12,7 @@ use Magento\Catalog\Model\Product\Type\Simple;
 use Magento\Framework\Exception\LocalizedException;
 use Magento\Framework\Exception\NoSuchEntityException;
 use Magento\TestFramework\Helper\Bootstrap;
+use PHPUnit\Framework\Attributes\DataProvider;
 
 /**
  * Test class for downloadable products export
@@ -24,7 +25,6 @@ class DownloadableProductsTest extends AbstractProductTestHelper
      * @magentoDbIsolation disabled
      * @magentoAppIsolation enabled
      * @magentoDataFixture Magento_CatalogDataExporter::Test/_files/downloadable_product_with_files_and_sample_url.php
-     * @dataProvider expectedDownloadableAttributeDataProvider
      *
      * @param array $expectedProductAttribute
      * @return void
@@ -33,6 +33,7 @@ class DownloadableProductsTest extends AbstractProductTestHelper
      * @throws \Zend_Db_Statement_Exception
      * @throws \Throwable
      */
+    #[DataProvider('expectedDownloadableAttributeDataProvider')]
     public function testDownloadableProducts(array $expectedProductAttribute) : void
     {
         $skus = ['downloadable-product'];

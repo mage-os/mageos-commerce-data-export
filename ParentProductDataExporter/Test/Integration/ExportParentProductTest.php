@@ -14,6 +14,7 @@ use Magento\Framework\Exception\NoSuchEntityException;
 use Magento\DataExporter\Model\FeedInterface;
 use Magento\DataExporter\Model\FeedPool;
 use Magento\TestFramework\Helper\Bootstrap;
+use PHPUnit\Framework\Attributes\DataProvider;
 use Zend_Db_Statement_Exception;
 
 /**
@@ -39,10 +40,10 @@ class ExportParentProductTest extends AbstractProductTestHelper
 
     /**
      * @magentoDataFixture Magento_ParentProductDataExporter::Test/_files/configurable_products.php
-     * @dataProvider expectedSimpleConfigurableWithParentsData
      * @throws NoSuchEntityException
      * @throws Zend_Db_Statement_Exception
      */
+    #[DataProvider('expectedSimpleConfigurableWithParentsData')]
     public function testExportSimpleConfigurableProductsWithParentData(array $expectedSimpleProduct): void
     {
         $this->checkExpectedItemsAreExportedInFeed($expectedSimpleProduct);
@@ -70,10 +71,10 @@ class ExportParentProductTest extends AbstractProductTestHelper
 
     /**
      * @magentoDataFixture Magento_ParentProductDataExporter::Test/_files/grouped_products.php
-     * @dataProvider expectedSimpleProductWithParentsData
      * @throws NoSuchEntityException
      * @throws Zend_Db_Statement_Exception
      */
+    #[DataProvider('expectedSimpleProductWithParentsData')]
     public function testExportSimpleProductsWithParentData(array $expectedSimpleProduct): void
     {
         $this->checkExpectedItemsAreExportedInFeed($expectedSimpleProduct);

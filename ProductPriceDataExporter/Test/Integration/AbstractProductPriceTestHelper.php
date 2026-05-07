@@ -177,7 +177,7 @@ abstract class AbstractProductPriceTestHelper extends TestCase
         }
     }
 
-    private function arrangeExpectedItems(array $expectedData, $actualData): array
+    private function arrangeExpectedItems(array $expectedData, array $actualData): array
     {
         $normalizedItems = [];
         foreach (array_keys($expectedData) as $key) {

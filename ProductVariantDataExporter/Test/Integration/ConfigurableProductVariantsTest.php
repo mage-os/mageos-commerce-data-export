@@ -20,7 +20,7 @@ use Magento\TestFramework\Helper\Bootstrap;
 /**
  * Test class for configurable product variants export
  */
-class ConfigurableProductVariantsTest extends AbstractProductVariantsTest
+class ConfigurableProductVariantsTest extends AbstractProductVariantsTestCase
 {
     /**
      * @var string

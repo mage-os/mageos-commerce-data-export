@@ -8,6 +8,7 @@ declare(strict_types=1);
 namespace Magento\ConfigurationDataExporter\Test\Integration\ConfigExport;
 
 use Magento\TestFramework\Helper\Bootstrap;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
 
 class ConfigurationExportTest extends TestCase
@@ -40,6 +41,8 @@ class ConfigurationExportTest extends TestCase
      */
     protected function setUp(): void
     {
+        $this->markTestSkipped('Module use only rabbitMQ for message queue, so test fails on CI');
+
         parent::setUp();
 
         $objectManager = Bootstrap::getObjectManager();
@@ -53,12 +56,11 @@ class ConfigurationExportTest extends TestCase
      * @param array $expected
      * @return void
      * @throws \Magento\Framework\Exception\LocalizedException
-     * @dataProvider configExportDataProvider
      * @magentoDbIsolation enabled
      */
+    #[DataProvider('configExportDataProvider')]
     public function testConfigUpdateExport(array $configs, array $expected): void
     {
-        $this->markTestSkipped('Module use only rabbitMQ for message queue, so test fails on CI');
         // to avoid consuming of incorrect message we need to purge queue before running test
         /** @var \Magento\Framework\Amqp\Config $amqpConfig */
         $amqpConfig = Bootstrap::getObjectManager()->get(\Magento\Framework\Amqp\Config::class);

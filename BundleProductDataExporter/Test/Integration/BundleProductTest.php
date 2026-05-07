@@ -13,6 +13,7 @@ use Magento\Bundle\Model\Option;
 use Magento\CatalogDataExporter\Test\Integration\AbstractProductTestHelper;
 use Magento\Framework\Stdlib\ArrayUtils;
 use Magento\TestFramework\Helper\Bootstrap;
+use PHPUnit\Framework\Attributes\DataProvider;
 
 /**
  * Test for bundle product export
@@ -44,11 +45,11 @@ class BundleProductTest extends AbstractProductTestHelper
      * Validate bundle product options data
      * @param array $item
      * @magentoDataFixture Magento/Bundle/_files/product_1.php
-     * @dataProvider getBundleFixedProductOptionsDataProvider
      * @magentoDbIsolation disabled
      * @magentoAppIsolation enabled
      * @return void
      */
+    #[DataProvider('getBundleFixedProductOptionsDataProvider')]
     public function testBundleFixedProductOptions(array $item) : void
     {
         $extractedProduct = $this->getExtractedProduct(self::BUNDLE_SKU, 'default');
@@ -66,12 +67,11 @@ class BundleProductTest extends AbstractProductTestHelper
      * @magentoConfigFixture current_store catalog/price/scope 1
      * @magentoDataFixture Magento_ProductPriceDataExporter::Test/_files/configure_website_scope_price.php
      * @magentoDataFixture Magento_BundleProductDataExporter::Test/_files/product_with_no_website_option.php
-     * @dataProvider getBundleFixedProductOptionsBeforeAndAfterPriceChangeDataProvider
-     *
      * @magentoDbIsolation disabled
      * @magentoAppIsolation enabled
      *
      */
+    #[DataProvider('getBundleFixedProductOptionsBeforeAndAfterPriceChangeDataProvider')]
     public function testBundleFixedProductOptionsWithPriceDifferentThanDefault(
         array $beforeChanges,
         array $afterChanges
@@ -117,10 +117,10 @@ class BundleProductTest extends AbstractProductTestHelper
      * @return void
      * @throws \Zend_Db_Statement_Exception
      * @magentoDataFixture Magento/Bundle/_files/dynamic_bundle_product_with_special_price.php
-     * @dataProvider getBundleDynamicProductOptionsDataProvider
      * @magentoDbIsolation disabled
      * @magentoAppIsolation enabled
      */
+    #[DataProvider('getBundleDynamicProductOptionsDataProvider')]
     public function testBundleDynamicProductOptions(array $item) : void
     {
         $extractedProduct = $this->getExtractedProduct(self::DYNAMIC_BUNDLE_SKU, 'default');

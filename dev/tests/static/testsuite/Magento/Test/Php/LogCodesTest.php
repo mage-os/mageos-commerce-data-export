@@ -112,7 +112,7 @@ class LogCodesTest extends \PHPUnit\Framework\TestCase
      */
     private function loadRegistryByCode(): ?array
     {
-        $registryPath =  BP . '/dev/tests/log-codes.md';
+        $registryPath = BP . '/dev/tests/log-codes.md';
 
         $entries = $this->parseRegistry((string) file_get_contents($registryPath));
         $index = [];

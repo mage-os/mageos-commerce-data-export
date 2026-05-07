@@ -9,6 +9,7 @@ namespace Magento\DataExporter\Test\Integration\Uuid;
 
 use Magento\DataExporter\Uuid\UuidManager;
 use Magento\TestFramework\Helper\Bootstrap;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
 
 class UuidManagerTest extends TestCase
@@ -27,12 +28,7 @@ class UuidManagerTest extends TestCase
         $this->objectManager = Bootstrap::getObjectManager();
     }
 
-    /**
-     * @param array $entityIds
-     * @param string $type
-     * @return void
-     * @dataProvider happyPathDataProvider
-     */
+    #[DataProvider('happyPathDataProvider')]
     public function testHappyPath(array $entityIds, string $type): void
     {
         /** @var UuidManager $uuidManager */
@@ -76,7 +72,7 @@ class UuidManagerTest extends TestCase
      */
     public function testUuidDuplicatesGenerated(): void
     {
-        $uuidGeneratorMock = $this->createMock(\Magento\Framework\DataObject\IdentityService::class);
+        $uuidGeneratorMock = $this->createStub(\Magento\Framework\DataObject\IdentityService::class);
         /** @var UuidManager $uuidManager */
         $uuidManager = $this->objectManager->create(UuidManager::class, ['identityService' => $uuidGeneratorMock]);
         $uuidGeneratorMock->method('generateId')->willReturn('uuid');

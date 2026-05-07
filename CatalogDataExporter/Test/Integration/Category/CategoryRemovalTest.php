@@ -14,7 +14,7 @@ use Magento\TestFramework\Helper\Bootstrap;
 /**
  * Test class for category feed removal
  */
-class CategoryRemovalTest extends AbstractCategoryTest
+class CategoryRemovalTest extends AbstractCategoryTestCase
 {
     /**
      * Validate category removal

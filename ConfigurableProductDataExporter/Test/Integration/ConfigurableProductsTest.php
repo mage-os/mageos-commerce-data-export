@@ -17,6 +17,7 @@ use Magento\ConfigurableProductDataExporter\Model\Provider\Product\ConfigurableO
 use Magento\Framework\Exception\LocalizedException;
 use Magento\Framework\Exception\NoSuchEntityException;
 use Magento\TestFramework\Helper\Bootstrap;
+use PHPUnit\Framework\Attributes\DataProvider;
 use Throwable;
 use Zend_Db_Statement_Exception;
 use function usort;
@@ -118,13 +119,13 @@ class ConfigurableProductsTest extends AbstractProductTestHelper
      * @magentoDataFixture Magento_ConfigurableProductDataExporter::Test/_files/setup_configurable_products.php
      * @magentoDbIsolation disabled
      * @magentoAppIsolation enabled
-     * @dataProvider outOfStockProducts
      * @param array $outOfStockSkus
      * @return void
      * @throws LocalizedException
      * @throws NoSuchEntityException
      * @throws Zend_Db_Statement_Exception
      */
+    #[DataProvider('outOfStockProducts')]
     public function testConfigurableProductsWithOutOfStockChilds(array $outOfStockSkus) : void
     {
         foreach ($outOfStockSkus as $sku) {
@@ -163,13 +164,13 @@ class ConfigurableProductsTest extends AbstractProductTestHelper
      * @magentoDataFixture Magento_ConfigurableProductDataExporter::Test/_files/setup_configurable_products_with_virtual_options.php
      * @magentoDbIsolation disabled
      * @magentoAppIsolation enabled
-     * @dataProvider outOfStockVirtualProducts
      * @param array $outOfStockSkus
      * @return void
      * @throws LocalizedException
      * @throws NoSuchEntityException
      * @throws Zend_Db_Statement_Exception
      */
+    #[DataProvider('outOfStockVirtualProducts')]
     public function testConfigurableProductsWithOutOfStockVirtualChilds(array $outOfStockSkus) : void
     {
         foreach ($outOfStockSkus as $sku) {

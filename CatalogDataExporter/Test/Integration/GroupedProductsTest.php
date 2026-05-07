@@ -11,6 +11,7 @@ namespace Magento\CatalogDataExporter\Test\Integration;
 use Magento\CatalogDataExporter\Test\Integration\AbstractProductTestHelper;
 use Magento\Framework\Stdlib\ArrayUtils;
 use Magento\TestFramework\Helper\Bootstrap;
+use PHPUnit\Framework\Attributes\DataProvider;
 
 /**
  * Test for grouped product export
@@ -37,11 +38,11 @@ class GroupedProductsTest extends AbstractProductTestHelper
      * Validate grouped product options data
      * @param array $item
      * @magentoDataFixture Magento/GroupedProduct/_files/product_grouped.php
-     * @dataProvider getGroupedProductOptionsDataProvider
      * @magentoDbIsolation disabled
      * @magentoAppIsolation enabled
      * @return void
      */
+    #[DataProvider('getGroupedProductOptionsDataProvider')]
     public function testGroupedProductOptions(array $item) : void
     {
         $extractedProduct = $this->getExtractedProduct(self::GROUPED_PRODUCT_SKU, 'default');
@@ -58,11 +59,11 @@ class GroupedProductsTest extends AbstractProductTestHelper
      * @param array $item
      * @magentoDataFixture Magento/Store/_files/second_website_with_two_stores.php
      * @magentoDataFixture Magento/GroupedProduct/_files/product_grouped_in_multiple_websites.php
-     * @dataProvider getGroupedProductOptionsDataProvider
      * @magentoDbIsolation disabled
      * @magentoAppIsolation enabled
      * @return void
      */
+    #[DataProvider('getGroupedProductOptionsDataProvider')]
     public function testGroupedProductOptionsInMultipleWebsites(array $item) : void
     {
         $storeViews = ['fixture_second_store','fixture_third_store'];

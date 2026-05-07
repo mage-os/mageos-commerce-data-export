@@ -27,7 +27,7 @@ use Magento\Framework\Exception\NoSuchEntityException;
  *
  * @magentoAppArea adminhtml
  */
-class MovedCategoryFeedTest extends AbstractCategoryTest
+class MovedCategoryFeedTest extends AbstractCategoryTestCase
 {
     private const CAT1_ID = 810;
     private const CAT1_CHILD_ID = 811;

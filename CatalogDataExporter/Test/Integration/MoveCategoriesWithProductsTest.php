@@ -20,6 +20,7 @@ use Magento\Framework\Exception\LocalizedException;
 use Magento\Framework\Exception\NoSuchEntityException;
 use Magento\Indexer\Cron\UpdateMview;
 use Magento\TestFramework\Helper\Bootstrap;
+use PHPUnit\Framework\Attributes\DataProvider;
 
 /**
  * Test class for simple product export
@@ -45,15 +46,15 @@ class MoveCategoriesWithProductsTest extends AbstractProductTestHelper
      * @magentoDbIsolation disabled
      * @magentoAppIsolation enabled
      * @magentoDataFixture Magento/Catalog/_files/categories.php
-     * @dataProvider getProductCategoriesDataProvider
      *
      * @param string $sku
-     * @param array $expectedCategoriesData
+     * @param array $categoryData
      * @return void
      * @throws NoSuchEntityException
      * @throws LocalizedException
      */
-    public function testMoveCategoryToTopLevel(string $sku, array $expectedCategoriesData) : void
+    #[DataProvider('getProductCategoriesDataProvider')]
+    public function testMoveCategoryToTopLevel(string $productSku, array $categoryData) : void
     {
         $this->mViewCron->execute();
 
@@ -62,13 +63,13 @@ class MoveCategoriesWithProductsTest extends AbstractProductTestHelper
         $childCategory->move(9, null);
         $this->mViewCron->execute();
 
-        $extractedProductData = $this->getExtractedProduct($sku, 'default');
-        $this->assertNotEmpty($extractedProductData, "Product with SKU $sku not found in the feed.");
+        $extractedProductData = $this->getExtractedProduct($productSku, 'default');
+        $this->assertNotEmpty($extractedProductData, "Product with SKU $productSku not found in the feed.");
         $this->assertNotEmpty($extractedProductData['feedData']);
         $feedData = $extractedProductData['feedData'];
         $this->assertNotEmpty($feedData['categoryData']);
         $categoryToVerify = [];
-        foreach ($expectedCategoriesData as $expectedCategoryId => $expectedCategoryData) {
+        foreach ($categoryData as $expectedCategoryId => $expectedCategoryData) {
             foreach ($feedData['categoryData'] as $productCategoryData) {
                 if ((string)$expectedCategoryId === $productCategoryData['categoryId']) {
                     $categoryToVerify = $productCategoryData;
@@ -78,12 +79,12 @@ class MoveCategoriesWithProductsTest extends AbstractProductTestHelper
             $this->assertNotEmpty(
                 $expectedCategoryData,
                 "Category with ID {$expectedCategoryData['categoryId']} "
-                . " not found in the feed for product with SKU $sku."
+                . " not found in the feed for product with SKU $productSku."
             );
             $this->assertEquals(
                 $expectedCategoryData,
                 $categoryToVerify,
-                "Category data for product with SKU $sku does not match expected data."
+                "Category data for product with SKU $productSku does not match expected data."
             );
         }
     }
@@ -93,7 +94,7 @@ class MoveCategoriesWithProductsTest extends AbstractProductTestHelper
      *
      * @return array[]
      */
-    public function getProductCategoriesDataProvider(): array
+    public static function getProductCategoriesDataProvider(): array
     {
         return [
             [

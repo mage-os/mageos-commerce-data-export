@@ -12,6 +12,7 @@ use Magento\Framework\Exception\NoSuchEntityException;
 use Magento\DataExporter\Model\FeedInterface;
 use Magento\DataExporter\Model\FeedPool;
 use Magento\TestFramework\Helper\Bootstrap;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
 use Zend_Db_Statement_Exception;
 
@@ -44,10 +45,10 @@ class ExportBundleOptionWithParentTest extends AbstractProductTestHelper
      * @magentoDataFixture Magento/Bundle/_files/product_with_multiple_options.php
      * @magentoDataFixture Magento/Bundle/_files/bundle_product_with_dynamic_price.php
      *
-     * @dataProvider expectedBundleOptionsWithParentData
      * @throws NoSuchEntityException
      * @throws Zend_Db_Statement_Exception
      */
+    #[DataProvider('expectedBundleOptionsWithParentData')]
     public function testExportBundleOptionsWithParentData(array $expectedSimpleProduct): void
     {
         $this->checkExpectedItemsAreExportedInFeed($expectedSimpleProduct);

@@ -26,7 +26,7 @@ use Magento\TestFramework\Helper\Bootstrap;
  *
  * @magentoDbIsolation enabled
  */
-class CreateOrderTest extends AbstractOrderFeedTest
+class CreateOrderTest extends AbstractOrderFeedTestCase
 {
     private const TRANSACTION_TYPES = [
         'authorization',

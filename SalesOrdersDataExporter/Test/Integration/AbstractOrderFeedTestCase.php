@@ -6,10 +6,9 @@
 
 declare(strict_types=1);
 
-namespace Magento\ProductVariantDataExporter\Test\Integration;
+namespace Magento\SalesOrdersDataExporter\Test\Integration;
 
 use Magento\Catalog\Api\ProductRepositoryInterface;
-use Magento\ProductVariantDataExporter\Model\Provider\ProductVariants\ConfigurableId;
 use Magento\DataExporter\Model\FeedInterface;
 use Magento\DataExporter\Model\FeedPool;
 use Magento\Eav\Model\AttributeRepository;
@@ -17,6 +16,7 @@ use Magento\Framework\App\ResourceConnection;
 use Magento\Framework\DB\Adapter\AdapterInterface;
 use Magento\Framework\Serialize\Serializer\Json;
 use Magento\Indexer\Model\Indexer;
+use Magento\Sales\Model\OrderRepository;
 use Magento\Store\Model\StoreManagerInterface;
 use Magento\TestFramework\Helper\Bootstrap;
 use PHPUnit\Framework\TestCase;
@@ -26,15 +26,15 @@ use RuntimeException;
 use Throwable;
 
 /**
- * Abstract class for product variant feed tests
+ * Abstract class for order feed tests
  * @SuppressWarnings(PHPMD.CouplingBetweenObjects)
  */
-abstract class AbstractProductVariantsTest extends TestCase
+abstract class AbstractOrderFeedTestCase extends TestCase
 {
     /**
-     * Product variant feed indexer
+     * Order feed indexer
      */
-    private const PRODUCT_VARIANT_FEED_INDEXER = 'catalog_data_exporter_product_variants';
+    private const ORDER_FEED_INDEXER = 'sales_order_data_exporter_v2';
 
     /**
      * @var ResourceConnection
@@ -57,9 +57,9 @@ abstract class AbstractProductVariantsTest extends TestCase
     protected $jsonSerializer;
 
     /**
-     * @var ProductRepositoryInterface
+     * @var OrderRepository
      */
-    protected $productRepository;
+    protected $orderRepository;
 
     /**
      * @var StoreManagerInterface
@@ -69,7 +69,7 @@ abstract class AbstractProductVariantsTest extends TestCase
     /**
      * @var FeedInterface
      */
-    protected $productVariantsFeed;
+    protected $ordersFeed;
 
     /**
      * @var AttributeRepository
@@ -87,11 +87,6 @@ abstract class AbstractProductVariantsTest extends TestCase
     protected $registry;
 
     /**
-     * @var ConfigurableId|mixed
-     */
-    protected $idResolver;
-
-    /**
      * @inheritDoc
      */
     protected function setUp() : void
@@ -101,49 +96,46 @@ abstract class AbstractProductVariantsTest extends TestCase
         $this->connection = $this->resource->getConnection();
         $this->indexer = Bootstrap::getObjectManager()->create(Indexer::class);
         $this->jsonSerializer = Bootstrap::getObjectManager()->create(Json::class);
-        $this->productRepository = Bootstrap::getObjectManager()->create(ProductRepositoryInterface::class);
+        $this->orderRepository = Bootstrap::getObjectManager()->create(ProductRepositoryInterface::class);
         $this->storeManager = Bootstrap::getObjectManager()->create(StoreManagerInterface::class);
+        $this->ordersFeed = Bootstrap::getObjectManager()->get(FeedPool::class)->getFeed('orders');
         $this->attributeRepository = Bootstrap::getObjectManager()->create(AttributeRepository::class);
         $this->arrayUtils = $objectManager->create(ArrayUtils::class);
         $this->registry = Bootstrap::getObjectManager()->get(Registry::class);
-        $this->idResolver = Bootstrap::getObjectManager()->get(ConfigurableId::class);
-        Bootstrap::getObjectManager()->configure([
-            'Magento\ProductVariantDataExporter\Model\Indexer\ProductVariantFeedIndexMetadata' => [
-                'arguments' => [
-                    'persistExportedFeed' => true
-                ]
-            ]
-        ]);
-        $this->productVariantsFeed = Bootstrap::getObjectManager()->get(FeedPool::class)->getFeed('variants');
     }
 
     /**
-     * Run the indexer to extract product variants data
+     * Run the indexer to extract orders data
      *
-     * @param array $parentIds
+     * @param array $ids
      * @return void
      *
      * @throws RuntimeException
      */
-    protected function runIndexer(array $parentIds) : void
+    protected function runIndexer(array $ids) : void
     {
         try {
-            $this->indexer->load(self::PRODUCT_VARIANT_FEED_INDEXER);
-            $this->indexer->reindexList($parentIds);
-        } catch (Throwable) {
-            throw new RuntimeException('Could not reindex product variant data');
+            $this->indexer->load(self::ORDER_FEED_INDEXER);
+            $this->indexer->reindexList($ids);
+        } catch (Throwable $e) {
+            throw new RuntimeException('Could not reindex orders data', $e);
         }
     }
 
     /**
-     * Wait one second before test execution after fixtures created.
+     * Returns orderFeeds by IDs
      *
-     * @return void
+     * @param array $ids
+     * @param bool $excludeDeleted
+     * @return array
+     * @throws \Zend_Db_Statement_Exception
      */
-    protected function emulateCustomersBehaviorAfterDeleteAction(): void
+    protected function getOrderFeedByIds(array $ids, bool $excludeDeleted = false): array
     {
-        // Avoid getFeed right after product was created or removed.
-        // We have to emulate real customers behavior
-        sleep(1);
+        $filteredFeed = array_filter(
+            $this->ordersFeed->getFeedSince('1')['feed'],
+            fn($item) => (!$excludeDeleted || !$item['deleted']) && in_array($item['commerceOrderId'], $ids)
+        );
+        return array_values($filteredFeed);
     }
 }

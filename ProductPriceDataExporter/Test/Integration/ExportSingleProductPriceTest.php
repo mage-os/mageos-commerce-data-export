@@ -17,6 +17,7 @@ use Magento\Framework\Exception\LocalizedException;
 use Magento\Framework\Exception\NoSuchEntityException;
 use Magento\Framework\Exception\StateException;
 use Magento\TestFramework\Helper\Bootstrap;
+use PHPUnit\Framework\Attributes\DataProvider;
 
 /**
  * Check prices for single (non-complex) products
@@ -40,10 +41,10 @@ class ExportSingleProductPriceTest extends AbstractProductPriceTestHelper
 
     /**
      * @magentoDataFixture Magento_ProductPriceDataExporter::Test/_files/simple_products.php
-     * @dataProvider expectedSimpleProductPricesDataProvider
      * @param array $expectedSimpleProductPrices
      * @throws NoSuchEntityException
      */
+    #[DataProvider('expectedSimpleProductPricesDataProvider')]
     public function testExportSimpleProductsPrices(array $expectedSimpleProductPrices): void
     {
         $this->checkExpectedItemsAreExportedInFeed($expectedSimpleProductPrices);
@@ -51,10 +52,10 @@ class ExportSingleProductPriceTest extends AbstractProductPriceTestHelper
 
     /**
      * @magentoDataFixture Magento_ProductPriceDataExporter::Test/_files/simple_products.php
-     * @dataProvider expectedSimpleProductPricesAfterDeleteDataProvider
      * @param array $expectedSimpleProductPrices
      * @throws NoSuchEntityException
      */
+    #[DataProvider('expectedSimpleProductPricesAfterDeleteDataProvider')]
     public function testExportDeletedSimpleProductsPrices(array $expectedSimpleProductPrices): void
     {
         // Delete product with regular price
@@ -68,13 +69,13 @@ class ExportSingleProductPriceTest extends AbstractProductPriceTestHelper
 
     /**
      * @magentoDataFixture Magento_ProductPriceDataExporter::Test/_files/simple_products.php
-     * @dataProvider expectedSimpleProductPricesReplaceSkuDataProvider
      * @param array $expectedSimpleProductPrices
      * @throws CouldNotSaveException
      * @throws NoSuchEntityException
      * @throws InputException
      * @throws StateException
      */
+    #[DataProvider('expectedSimpleProductPricesReplaceSkuDataProvider')]
     public function testExportSimpleProductsPricesReplaceSku(array $expectedSimpleProductPrices): void
     {
         // Delete product with regular price
@@ -91,10 +92,10 @@ class ExportSingleProductPriceTest extends AbstractProductPriceTestHelper
     /**
      * @magentoDataFixture Magento_ProductPriceDataExporter::Test/_files/simple_products.php
      * @magentoDataFixture Magento/CatalogRule/_files/catalog_rule_25_customer_group_all.php
-     * @dataProvider expectedSimpleProductPricesWithCatalogRuleDataProvider
      * @param array $expectedSimpleProductPrices
      * @throws NoSuchEntityException
      */
+    #[DataProvider('expectedSimpleProductPricesWithCatalogRuleDataProvider')]
     public function testExportSimpleProductsWithCatalogPriceRulePrices(array $expectedSimpleProductPrices): void
     {
         $this->checkExpectedItemsAreExportedInFeed($expectedSimpleProductPrices);
@@ -103,11 +104,11 @@ class ExportSingleProductPriceTest extends AbstractProductPriceTestHelper
     /**
      * @magentoDataFixture Magento_ProductPriceDataExporter::Test/_files/simple_products.php
      * @magentoDataFixture Magento/CatalogRule/_files/catalog_rule_25_customer_group_all.php
-     * @dataProvider expectedSimpleProductPricesWithCatalogRuleDisabledDataProvider
      * @param array $expectedSimpleProductPrices
      * @throws NoSuchEntityException
      * @throws CouldNotSaveException
      */
+    #[DataProvider('expectedSimpleProductPricesWithCatalogRuleDisabledDataProvider')]
     public function testExportSimpleProductsWithDisabledCatalogPriceRulePrices(array $expectedSimpleProductPrices): void
     {
         $ruleProductProcessor = Bootstrap::getObjectManager()->get(RuleProductProcessor::class);
@@ -120,10 +121,10 @@ class ExportSingleProductPriceTest extends AbstractProductPriceTestHelper
 
     /**
      * @magentoDataFixture Magento_ProductPriceDataExporter::Test/_files/downloadable_products.php
-     * @dataProvider expectedDownloadableProductPricesDataProvider
      * @param array $expectedDownloadableProductPricesDataProvider
      * @throws NoSuchEntityException
      */
+    #[DataProvider('expectedDownloadableProductPricesDataProvider')]
     public function testExportDownloadableProductsPrices(array $expectedDownloadableProductPricesDataProvider): void
     {
         $this->checkExpectedItemsAreExportedInFeed($expectedDownloadableProductPricesDataProvider);
@@ -131,11 +132,11 @@ class ExportSingleProductPriceTest extends AbstractProductPriceTestHelper
 
     /**
      * @magentoDataFixture Magento_ProductPriceDataExporter::Test/_files/simple_products_with_tier_prices.php
-     * @dataProvider expectedSimpleProductWithTierPricesDataProvider
      * @param array $expectedSimpleProductWithTierPrices
      * @return void
      * @throws NoSuchEntityException
      */
+    #[DataProvider('expectedSimpleProductWithTierPricesDataProvider')]
     public function testExportSimpleProductsWithTierPrices(array $expectedSimpleProductWithTierPrices): void
     {
         $this->checkExpectedItemsAreExportedInFeed($expectedSimpleProductWithTierPrices);
@@ -143,11 +144,11 @@ class ExportSingleProductPriceTest extends AbstractProductPriceTestHelper
 
     /**
      * @magentoDataFixture Magento_ProductPriceDataExporter::Test/_files/simple_products_with_tier_and_group_prices.php
-     * @dataProvider expectedSimpleProductWithGroupAndTierPricesDataProvider
      * @param array $expectedSimpleProductWithGroupAndTierPrices
      * @return void
      * @throws NoSuchEntityException
      */
+    #[DataProvider('expectedSimpleProductWithGroupAndTierPricesDataProvider')]
     public function testExportSimpleProductsWithGroupedAndTierPrices(
         array $expectedSimpleProductWithGroupAndTierPrices
     ): void {
@@ -157,11 +158,11 @@ class ExportSingleProductPriceTest extends AbstractProductPriceTestHelper
     /**
      * @magentoDataFixture Magento_ProductPriceDataExporter::Test/_files/simple_products_with_tier_and_group_prices.php
      * @magentoDataFixture Magento/CatalogRule/_files/catalog_rule_25_customer_group_all.php
-     * @dataProvider expectedSimpleProductWithTierPricesAndCatalogRulesDataProvider
      * @param array $expectedSimpleProductWithGroupAndTierPricesAndCatalogRules
      * @return void
      * @throws NoSuchEntityException
      */
+    #[DataProvider('expectedSimpleProductWithTierPricesAndCatalogRulesDataProvider')]
     public function testExportSimpleProductsWithGroupedAndTierPricesAndCatalogRules(
         array $expectedSimpleProductWithGroupAndTierPricesAndCatalogRules
     ): void {
@@ -171,11 +172,11 @@ class ExportSingleProductPriceTest extends AbstractProductPriceTestHelper
     /**
      * @magentoDataFixture Magento_ProductPriceDataExporter::Test/_files/simple_products_with_tier_and_group_prices_on_all_websites.php
      * @magentoDataFixture Magento/CatalogRule/_files/catalog_rule_25_customer_group_all.php
-     * @dataProvider expectedSimpleProductWithTierPricesOnAllWebsitesAndCatalogRulesDataProvider
      * @param array $expectedSimpleProductWithGroupAndTierPricesAndCatalogRules
      * @return void
      * @throws NoSuchEntityException
      */
+    #[DataProvider('expectedSimpleProductWithTierPricesOnAllWebsitesAndCatalogRulesDataProvider')]
     public function testExportSimpleProductsWithGroupedAndTierPricesOnAllWebsitesAndCatalogRules(
         array $expectedSimpleProductWithGroupAndTierPricesAndCatalogRules
     ): void {
