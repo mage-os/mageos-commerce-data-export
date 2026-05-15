@@ -1,0 +1,14 @@
+<?xml version="1.0"?>
+<!--
+/**
+ * Copyright 2024 Adobe
+ * All Rights Reserved.
+ */
+-->
+<config xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="urn:magento:module:Magento_Cron:etc/crontab.xsd">
+    <group id="commerce_data_export">
+        <job name="cleanup_deleted_feed_items" instance="Magento\DataExporter\Cron\CleanupDeletedFeedItems" method="execute">
+            <schedule>0 2 * * *</schedule>
+        </job>
+    </group>
+</config>

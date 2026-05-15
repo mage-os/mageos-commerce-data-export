@@ -123,7 +123,7 @@ class LogCodesTest extends \PHPUnit\Framework\TestCase
     }
 
     /**
-     * @return list<array{code:string,level:string,message:string,logical_path:string,line:int}>
+     * @return list<array{code:string,level:string,message:string,logical_path:string}>
      */
     private function parseRegistry(string $markdown): array
     {
@@ -135,15 +135,11 @@ class LogCodesTest extends \PHPUnit\Framework\TestCase
 
         foreach ($rows as $row) {
             [, $code, $level, $message, $location] = $row;
-            if (!preg_match('/^(.+):(\d+)$/', trim($location), $loc)) {
-                continue;
-            }
             $entries[] = [
                 'code' => $code,
                 'level' => strtolower($level),
                 'message' => $message,
-                'logical_path' => $loc[1],
-                'line' => (int) $loc[2],
+                'logical_path' => trim($location),
             ];
         }
 
