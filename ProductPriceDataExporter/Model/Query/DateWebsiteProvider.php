@@ -12,6 +12,7 @@ use Magento\DataExporter\Model\Logging\CommerceDataExportLoggerInterface;
 use Magento\Framework\App\ResourceConnection;
 use Magento\Framework\Stdlib\DateTime;
 use Magento\Framework\Stdlib\DateTime\TimezoneInterface;
+use Magento\Store\Model\Store;
 
 /**
  * Get _current_ date in website timezone in format [website_id => website_date, ...]
@@ -84,5 +85,17 @@ class DateWebsiteProvider
             $this->data[$item['website_id']] = $this->dateTime->formatDate($timestamp, false);
         }
         return $this->data;
+    }
+
+    /**
+     * Return the current date in the default scope timezone.
+     *
+     * Matches the indexer's rule_date when useWebsiteTimezone=false.
+     *
+     * @return string
+     */
+    public function getDefaultScopeDate(): string
+    {
+        return $this->dateTime->formatDate($this->localeDate->scopeTimeStamp(Store::DEFAULT_STORE_ID), false);
     }
 }

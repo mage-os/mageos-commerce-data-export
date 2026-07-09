@@ -191,7 +191,9 @@ class CustomerGroupPricesQuery
             ->joinInner(
                 ['rule' => $this->resourceConnection->getTableName('catalogrule_product_price')],
                 'product.entity_id = rule.product_id' .
-                ' AND rule.website_id = website.website_id AND rule.rule_date = ' . $this->getWebsiteDate(),
+                ' AND rule.website_id = website.website_id' .
+                ' AND rule.rule_date IN (' . $this->getWebsiteDate()
+                . ", '" . $this->dateWebsiteProvider->getDefaultScopeDate() . "')",
                 []
             )->columns([
                 'price' => new \Zend_Db_Expr('NULL'),

@@ -11,6 +11,9 @@ use Magento\CatalogRule\Api\CatalogRuleRepositoryInterface;
 use Magento\CatalogRule\Api\Data\RuleInterface;
 use Magento\CatalogRule\Model\Indexer\Rule\RuleProductProcessor;
 use Magento\CatalogRule\Model\ResourceModel\RuleFactory as ResourceRuleFactory;
+use Magento\Framework\App\ResourceConnection;
+use Magento\Indexer\Model\Indexer;
+use Magento\ProductPriceDataExporter\Model\Query\DateWebsiteProvider;
 use Magento\Framework\Exception\CouldNotSaveException;
 use Magento\Framework\Exception\InputException;
 use Magento\Framework\Exception\LocalizedException;
@@ -117,6 +120,95 @@ class ExportSingleProductPriceTest extends AbstractProductPriceTestHelper
         $this->catalogRuleRepository->save($rule);
         $ruleProductProcessor->getIndexer()->reindexAll();
         $this->checkExpectedItemsAreExportedInFeed($expectedSimpleProductPrices);
+    }
+
+    /**
+     * Catalog rule price must still be exported for a website whose local date differs from the
+     * default scope date, when catalogrule_product_price holds only the default-scope date - the
+     * state left by the indexer with useWebsiteTimezone=false (CatalogRuleStaging) after midnight
+     * UTC for UTC-negative stores.
+     *
+     * The default scope timezone (Kiritimati, UTC+14) and the base store timezone (Pago_Pago,
+     * UTC-11) are 25h apart, so the website-local date is always different from the default scope
+     * date and the export has to fall back to the default scope date to find the rule price.
+     *
+     * getDefaultScopeDate() reads the timezone via store scope 0 (the admin store), so the
+     * config fixture must also be applied to admin_store - a plain default-scope fixture only
+     * patches the "default" config branch and leaves the admin store's cached value stale.
+     *
+     * @magentoConfigFixture general/locale/timezone Pacific/Kiritimati
+     * @magentoConfigFixture admin_store general/locale/timezone Pacific/Kiritimati
+     * @magentoConfigFixture default_store general/locale/timezone Pacific/Pago_Pago
+     * @magentoDataFixture Magento_ProductPriceDataExporter::Test/_files/simple_products.php
+     * @magentoDataFixture Magento/CatalogRule/_files/catalog_rule_25_customer_group_all.php
+     * @throws NoSuchEntityException
+     */
+    public function testExportCatalogRulePriceWhenWebsiteDateDiffersFromDefaultScope(): void
+    {
+        $objectManager = Bootstrap::getObjectManager();
+        $resourceConnection = $objectManager->get(ResourceConnection::class);
+        $dateProvider = $objectManager->get(DateWebsiteProvider::class);
+
+        $baseWebsiteId = (int)$this->websiteRepository->get('base')->getId();
+        $defaultScopeDate = $dateProvider->getDefaultScopeDate();
+        $websiteDate = $dateProvider->getWebsitesDate()[$baseWebsiteId] ?? null;
+
+        // Guard the test premise: with a >24h timezone spread these must never be equal,
+        // otherwise the default-scope fallback would not be exercised.
+        self::assertNotSame(
+            $defaultScopeDate,
+            $websiteDate,
+            'Website local date must differ from the default scope date for this test to be meaningful'
+        );
+
+        // Reproduce useWebsiteTimezone=false state: the rule price exists only under the
+        // default-scope date, not under the base website's local date.
+        $productId = (int)$this->productRepository->get('simple_product_with_regular_price')->getId();
+        $connection = $resourceConnection->getConnection();
+        $table = $resourceConnection->getTableName('catalogrule_product_price');
+        $connection->delete($table, ['product_id = ?' => $productId]);
+        $connection->insert($table, [
+            'rule_date' => $defaultScopeDate,
+            'customer_group_id' => 0,
+            'product_id' => $productId,
+            'rule_price' => self::getPriceForVersion(41.6625),
+            'website_id' => $baseWebsiteId,
+        ]);
+
+        // Force the price feed to be rebuilt from the manipulated rule price table.
+        $feedIndexer = $objectManager->create(Indexer::class);
+        $feedIndexer->load('catalog_data_exporter_product_prices');
+        $feedIndexer->invalidate();
+
+        $this->checkExpectedItemsAreExportedInFeed([
+            'simple_product_with_regular_price_base_0' => [
+                'sku' => 'simple_product_with_regular_price',
+                'type' => 'SIMPLE',
+                'customerGroupCode' => '0',
+                'websiteCode' => 'base',
+                'regular' => 55.55,
+                'discounts' => null,
+                'deleted' => false
+            ],
+            'simple_product_with_regular_price_base_b6589fc6ab0dc82cf12099d1c2d40ab994e8410c' => [
+                'sku' => 'simple_product_with_regular_price',
+                'type' => 'SIMPLE',
+                'customerGroupCode' => 'b6589fc6ab0dc82cf12099d1c2d40ab994e8410c',
+                'websiteCode' => 'base',
+                'regular' => 55.55,
+                'discounts' => [0 => ['code' => 'catalog_rule', 'price' => self::getPriceForVersion(41.6625)]],
+                'deleted' => false
+            ],
+            'simple_product_with_regular_price_test_0' => [
+                'sku' => 'simple_product_with_regular_price',
+                'type' => 'SIMPLE',
+                'customerGroupCode' => '0',
+                'websiteCode' => 'test',
+                'regular' => 55.55,
+                'discounts' => null,
+                'deleted' => false
+            ],
+        ]);
     }
 
     /**
