@@ -32,7 +32,7 @@ use Magento\TestFramework\Utility\FilesSearch;
  */
 class LogCodesTest extends \PHPUnit\Framework\TestCase
 {
-    private const LOG_CODE_REGEX = '/\bCDE(\d{2})-(\d{2})\b/';
+    private const LOG_CODE_REGEX = '/\b([A-Z]{3})(\d{2})-(\d{2})\b/';
     private const LOG_LEVELS = ['error', 'warning', 'critical'];
 
     public function testChangedFilesHaveValidLogCodes(): void
@@ -112,12 +112,13 @@ class LogCodesTest extends \PHPUnit\Framework\TestCase
      */
     private function loadRegistryByCode(): ?array
     {
-        $registryPath = BP . '/dev/tests/log-codes.md';
-
-        $entries = $this->parseRegistry((string) file_get_contents($registryPath));
         $index = [];
-        foreach ($entries as $entry) {
-            $index[$entry['code']] = $entry;
+        // Merge every per-source registry: the base `log-codes.md` plus suffixed ones
+        // (e.g. `log-codes-ccdm-b2b.md`) each source ships, so connectors own their own codes.
+        foreach (glob(BP . '/dev/tests/log-codes*.md') as $registryPath) {
+            foreach ($this->parseRegistry((string) file_get_contents($registryPath)) as $entry) {
+                $index[$entry['code']] = $entry;
+            }
         }
         return $index;
     }
@@ -128,7 +129,7 @@ class LogCodesTest extends \PHPUnit\Framework\TestCase
     private function parseRegistry(string $markdown): array
     {
         $entries = [];
-        $rowPattern = '/^\|\s*(CDE\d{2}-\d{2})\s*\|\s*([a-zA-Z]+)\s*\|\s*`([^`]+)`\s*\|\s*`([^`]+)`\s*\|\s*$/m';
+        $rowPattern = '/^\|\s*([A-Z]{3}\d{2}-\d{2})\s*\|\s*([a-zA-Z]+)\s*\|\s*`([^`]+)`\s*\|\s*`([^`]+)`\s*\|\s*$/m';
         if (!preg_match_all($rowPattern, $markdown, $rows, PREG_SET_ORDER)) {
             return [];
         }
