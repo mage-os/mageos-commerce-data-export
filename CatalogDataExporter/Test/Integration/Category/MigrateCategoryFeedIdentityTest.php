@@ -10,6 +10,7 @@ namespace Magento\CatalogDataExporter\Test\Integration\Category;
 use Magento\Catalog\Test\Fixture\Category as CategoryFixture;
 use Magento\CatalogDataExporter\Setup\Patch\Data\MigrateCategoryFeedIdentity;
 use Magento\DataExporter\Model\Indexer\FeedIndexMetadata;
+use Magento\DataExporter\Test\Integration\DisablesFeedReadinessCheckers;
 use Magento\DataExporter\Status\ExportStatusCodeProvider;
 use Magento\Framework\App\ResourceConnection;
 use Magento\Framework\DB\Adapter\AdapterInterface;
@@ -31,6 +32,7 @@ use PHPUnit\Framework\TestCase;
  */
 class MigrateCategoryFeedIdentityTest extends TestCase
 {
+    use DisablesFeedReadinessCheckers;
     private const FEED_TABLE = 'cde_categories_feed';
     private const FEED_INDEXER = 'catalog_data_exporter_categories';
 
@@ -41,11 +43,9 @@ class MigrateCategoryFeedIdentityTest extends TestCase
     private int $testCategoryId;
     private ?int $orphanEntityId = null;
 
-    /**
-     * @inheritDoc
-     */
     protected function setUp(): void
     {
+        self::disableFeedReadinessCheckers();
         $this->objectManager = Bootstrap::getObjectManager();
 
         // persistExportedFeed must be configured before any service depending on
@@ -53,7 +53,7 @@ class MigrateCategoryFeedIdentityTest extends TestCase
         $this->objectManager->configure([
             'Magento\CatalogDataExporter\Model\Indexer\CategoryFeedIndexMetadata' => [
                 'arguments' => ['persistExportedFeed' => true]
-            ]
+            ],
         ]);
 
         $this->resource = $this->objectManager->get(ResourceConnection::class);

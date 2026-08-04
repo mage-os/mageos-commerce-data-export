@@ -17,6 +17,7 @@ use Magento\Framework\Registry;
 use Magento\Indexer\Model\Indexer;
 use Magento\Indexer\Model\Processor;
 use Magento\Store\Api\WebsiteRepositoryInterface;
+use Magento\DataExporter\Test\Integration\DisablesFeedReadinessCheckers;
 use Magento\TestFramework\Helper\Bootstrap;
 use PHPUnit\Framework\TestCase;
 
@@ -25,6 +26,8 @@ use PHPUnit\Framework\TestCase;
  */
 abstract class AbstractProductPriceTestHelper extends TestCase
 {
+    use DisablesFeedReadinessCheckers;
+
     /**
      * Test Constants
      */
@@ -67,6 +70,7 @@ abstract class AbstractProductPriceTestHelper extends TestCase
      */
     protected function setUp(): void
     {
+        self::disableFeedReadinessCheckers();
         $this->objectManager = Bootstrap::getObjectManager();
         $this->productRepository = $this->objectManager->create(ProductRepositoryInterface::class);
         $this->indexer = $this->objectManager->create(Indexer::class);

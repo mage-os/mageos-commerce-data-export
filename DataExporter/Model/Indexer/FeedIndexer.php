@@ -16,6 +16,8 @@ use Magento\Framework\Mview\ActionInterface as MviewActionInterface;
 /**
  * Product export feed indexer class
  * Facade for IndexerProcessor, implements Magento native indexers interfaces
+ *
+ * @SuppressWarnings(PHPMD.CouplingBetweenObjects)
  */
 class FeedIndexer implements IndexerActionInterface, MviewActionInterface, FeedIndexMetadataProviderInterface
 {
@@ -50,12 +52,18 @@ class FeedIndexer implements IndexerActionInterface, MviewActionInterface, FeedI
     private ?FeedLockManager $lockManager;
 
     /**
+     * @var FeedReadinessCheckerPool
+     */
+    private FeedReadinessCheckerPool $readinessCheckerPool;
+
+    /**
      * @param FeedIndexProcessorInterface $processor
      * @param DataSerializerInterface $serializer
      * @param FeedIndexMetadata $feedIndexMetadata
      * @param EntityIdsProviderInterface $entityIdsProvider
      * @param CommerceDataExportLoggerInterface|null $logger
      * @param FeedLockManager|null $lockManager
+     * @param FeedReadinessCheckerPool|null $readinessCheckerPool
      */
     public function __construct(
         FeedIndexProcessorInterface $processor,
@@ -63,7 +71,8 @@ class FeedIndexer implements IndexerActionInterface, MviewActionInterface, FeedI
         FeedIndexMetadata $feedIndexMetadata,
         EntityIdsProviderInterface $entityIdsProvider,
         ?CommerceDataExportLoggerInterface $logger = null,
-        ?FeedLockManager $lockManager = null
+        ?FeedLockManager $lockManager = null,
+        ?FeedReadinessCheckerPool $readinessCheckerPool = null
     ) {
         $this->processor = $processor;
         $this->feedIndexMetadata = $feedIndexMetadata;
@@ -72,6 +81,8 @@ class FeedIndexer implements IndexerActionInterface, MviewActionInterface, FeedI
         $this->logger = $logger ??
             ObjectManager::getInstance()->get(CommerceDataExportLoggerInterface::class);
         $this->lockManager = $lockManager ?? ObjectManager::getInstance()->get(FeedLockManager::class);
+        $this->readinessCheckerPool = $readinessCheckerPool
+            ?? ObjectManager::getInstance()->get(FeedReadinessCheckerPool::class);
     }
 
     /**
@@ -82,6 +93,11 @@ class FeedIndexer implements IndexerActionInterface, MviewActionInterface, FeedI
      */
     public function executeFull()
     {
+        if (!$this->isReady()) {
+            $this->logNotReady('full reindex');
+            return;
+        }
+
         $operation = $this->feedIndexMetadata->isExportImmediately() ? 'full sync' : 'full reindex(legacy)';
         $this->logger->initSyncLog($this->feedIndexMetadata, $operation);
 
@@ -135,6 +151,11 @@ class FeedIndexer implements IndexerActionInterface, MviewActionInterface, FeedI
      */
     public function executeList(array $ids)
     {
+        if (!$this->isReady()) {
+            $this->logNotReady('partial reindex');
+            return;
+        }
+
         $this->logWarningIfFeedIsNotLocked();
         $this->processor->partialReindex(
             $this->feedIndexMetadata,
@@ -154,6 +175,11 @@ class FeedIndexer implements IndexerActionInterface, MviewActionInterface, FeedI
      */
     public function executeRow($id)
     {
+        if (!$this->isReady()) {
+            $this->logNotReady('partial reindex');
+            return;
+        }
+
         $this->logWarningIfFeedIsNotLocked();
         $this->processor->partialReindex(
             $this->feedIndexMetadata,
@@ -172,6 +198,11 @@ class FeedIndexer implements IndexerActionInterface, MviewActionInterface, FeedI
      */
     public function execute($ids)
     {
+        if (!$this->isReady()) {
+            $this->logNotReady('partial reindex');
+            return;
+        }
+
         $this->logWarningIfFeedIsNotLocked();
         $this->processor->partialReindex(
             $this->feedIndexMetadata,
@@ -189,6 +220,39 @@ class FeedIndexer implements IndexerActionInterface, MviewActionInterface, FeedI
     public function getFeedIndexMetadata(): FeedIndexMetadata
     {
         return $this->feedIndexMetadata;
+    }
+
+    /**
+     * Returns false when any readiness checker for this feed reports not ready.
+     *
+     * @return bool
+     */
+    private function isReady(): bool
+    {
+        $checkers = $this->readinessCheckerPool->getCheckersForFeed($this->feedIndexMetadata->getFeedName());
+        foreach ($checkers as $checker) {
+            if (!$checker->isReady()) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    /**
+     * Log that indexation is being skipped because the feed is not ready to process data.
+     *
+     * @param string $operation
+     * @return void
+     */
+    private function logNotReady(string $operation): void
+    {
+        $this->logger->info(
+            sprintf(
+                'Feed "%s" is not ready: connector configuration is missing or invalid. Skipping %s.',
+                $this->feedIndexMetadata->getFeedName(),
+                $operation
+            )
+        );
     }
 
     /**

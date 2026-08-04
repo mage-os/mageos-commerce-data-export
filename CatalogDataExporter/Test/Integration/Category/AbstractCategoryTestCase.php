@@ -11,6 +11,7 @@ namespace Magento\CatalogDataExporter\Test\Integration\Category;
 use Magento\Catalog\Api\CategoryRepositoryInterface;
 use Magento\DataExporter\Model\FeedInterface;
 use Magento\DataExporter\Model\FeedPool;
+use Magento\DataExporter\Test\Integration\DisablesFeedReadinessCheckers;
 use Magento\Framework\DB\Adapter\AdapterInterface;
 use Magento\Store\Model\StoreManagerInterface;
 use PHPUnit\Framework\TestCase;
@@ -24,6 +25,7 @@ use Magento\Framework\Serialize\Serializer\Json;
  */
 abstract class AbstractCategoryTestCase extends TestCase
 {
+    use DisablesFeedReadinessCheckers;
     /**
      * Category feed indexer id
      */
@@ -69,11 +71,9 @@ abstract class AbstractCategoryTestCase extends TestCase
      */
     protected $categoryFeed;
 
-    /**
-     * @inheritDoc
-     */
     protected function setUp() : void
     {
+        self::disableFeedReadinessCheckers();
         $this->resource = Bootstrap::getObjectManager()->create(ResourceConnection::class);
         $this->connection = $this->resource->getConnection();
         $this->indexer = Bootstrap::getObjectManager()->create(Indexer::class);
@@ -86,7 +86,7 @@ abstract class AbstractCategoryTestCase extends TestCase
                 'arguments' => [
                     'persistExportedFeed' => true
                 ]
-            ]
+            ],
         ]);
         $this->categoryFeed = Bootstrap::getObjectManager()->get(FeedPool::class)->getFeed('categories');
 

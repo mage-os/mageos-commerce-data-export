@@ -18,6 +18,7 @@ use Magento\Framework\DB\Adapter\AdapterInterface;
 use Magento\Framework\Serialize\Serializer\Json;
 use Magento\Indexer\Model\Indexer;
 use Magento\Store\Model\StoreManagerInterface;
+use Magento\DataExporter\Test\Integration\DisablesFeedReadinessCheckers;
 use Magento\TestFramework\Helper\Bootstrap;
 use PHPUnit\Framework\TestCase;
 use Magento\Framework\Stdlib\ArrayUtils;
@@ -31,6 +32,8 @@ use Throwable;
  */
 abstract class AbstractProductVariantsTestCase extends TestCase
 {
+    use DisablesFeedReadinessCheckers;
+
     /**
      * Product variant feed indexer
      */
@@ -96,6 +99,7 @@ abstract class AbstractProductVariantsTestCase extends TestCase
      */
     protected function setUp() : void
     {
+        self::disableFeedReadinessCheckers();
         $objectManager = Bootstrap::getObjectManager();
         $this->resource = Bootstrap::getObjectManager()->create(ResourceConnection::class);
         $this->connection = $this->resource->getConnection();

@@ -31,6 +31,7 @@ use Magento\Store\Api\StoreRepositoryInterface;
 use Magento\Store\Api\WebsiteRepositoryInterface;
 use Magento\Store\Api\GroupRepositoryInterface;
 use Magento\Tax\Model\TaxClass\Source\Product as TaxClassSource;
+use Magento\DataExporter\Test\Integration\DisablesFeedReadinessCheckers;
 use Magento\TestFramework\Helper\Bootstrap;
 use PHPUnit\Event\Runtime\PHP;
 use function PHPUnit\Framework\assertEmpty;
@@ -43,6 +44,7 @@ use function PHPUnit\Framework\assertEquals;
  */
 abstract class AbstractProductTestHelper extends \PHPUnit\Framework\TestCase
 {
+    use DisablesFeedReadinessCheckers;
     /**
      * Test Constants
      */
@@ -153,6 +155,7 @@ abstract class AbstractProductTestHelper extends \PHPUnit\Framework\TestCase
      */
     protected function setUp(): void
     {
+        self::disableFeedReadinessCheckers();
         $this->resource = Bootstrap::getObjectManager()->create(ResourceConnection::class);
         $this->connection = $this->resource->getConnection();
         $this->indexer = Bootstrap::getObjectManager()->create(Indexer::class);
@@ -185,7 +188,7 @@ abstract class AbstractProductTestHelper extends \PHPUnit\Framework\TestCase
                 'arguments' => [
                     'persistExportedFeed' => true
                 ]
-            ]
+            ],
         ]);
 
         $this->indexer->load(self::CATALOG_DATA_EXPORTER);

@@ -49,7 +49,19 @@ class IndexInvalidationManager
         $successfullyInvalidated = [];
         try {
             foreach ($indexers as $indexerId) {
-                $this->indexerFactory->create()->load($indexerId)->invalidate();
+                try {
+                    $indexer = $this->indexerFactory->create()->load($indexerId);
+                } catch (\InvalidArgumentException $ignore) {
+                    $this->logger->info(
+                        sprintf(
+                            'Indexer "%s" not found - skip invalidation on event "%s"',
+                            $indexerId,
+                            $eventName,
+                        ),
+                    );
+                    continue;
+                }
+                $indexer->invalidate();
                 $successfullyInvalidated[] = $indexerId;
             }
         } catch (\Throwable $e) {
