@@ -78,6 +78,7 @@ abstract class AbstractProductTestHelper extends \PHPUnit\Framework\TestCase
         'ac_attribute_set',
         'ac_inventory',
         'ac_tax_class',
+        'ac_customizable_options',
     ];
 
     /**

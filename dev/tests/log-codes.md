@@ -38,6 +38,7 @@ Log codes related to errors or warnings that occur while collecting data from so
 | CDE01-20 | warning | `CDE01-20 GiftCard {sku} doesn't have valid options: {options}`                                                                    | `commerce-data-export-ee/GiftCardProductDataExporter/Plugin/GiftCardAsAttribute.php`                 |
 | CDE01-21 | error   | `CDE01-21 Unable to resolve url_path for category {id} with path "{path}", url_key "{urk_key}", store "{store}"`                   | `commerce-data-export/CatalogDataExporter/Model/Provider/Categories.php`                             |
 | CDE01-22 | error   | `CDE01-22 Unable to resolve url_path for category{id} with path "{path}" for store view "{store}"`                                 | `commerce-data-export/CatalogDataExporter/Model/Provider/Product/CategoryData.php`                    |
+| CDE01-23 | error   | `CDE01-23 Unable to assemble "ac_customizable_options" attribute. Error: {exception_message}` | `commerce-data-export/CustomizableOptionsDataExporter/Model/Provider/CustomizableOptionsProvider.php` |
 
 ---
 
