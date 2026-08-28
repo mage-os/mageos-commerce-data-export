@@ -124,6 +124,7 @@ class ConfigurableProductsTest extends AbstractProductTestHelper
      * @throws LocalizedException
      * @throws NoSuchEntityException
      * @throws Zend_Db_Statement_Exception
+     * @dataProvider outOfStockProducts
      */
     #[DataProvider('outOfStockProducts')]
     public function testConfigurableProductsWithOutOfStockChilds(array $outOfStockSkus) : void
@@ -169,6 +170,7 @@ class ConfigurableProductsTest extends AbstractProductTestHelper
      * @throws LocalizedException
      * @throws NoSuchEntityException
      * @throws Zend_Db_Statement_Exception
+     * @dataProvider outOfStockVirtualProducts
      */
     #[DataProvider('outOfStockVirtualProducts')]
     public function testConfigurableProductsWithOutOfStockVirtualChilds(array $outOfStockSkus) : void

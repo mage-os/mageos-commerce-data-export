@@ -48,6 +48,7 @@ class BundleProductTest extends AbstractProductTestHelper
      * @magentoDbIsolation disabled
      * @magentoAppIsolation enabled
      * @return void
+     * @dataProvider getBundleFixedProductOptionsDataProvider
      */
     #[DataProvider('getBundleFixedProductOptionsDataProvider')]
     public function testBundleFixedProductOptions(array $item) : void
@@ -69,7 +70,7 @@ class BundleProductTest extends AbstractProductTestHelper
      * @magentoDataFixture Magento_BundleProductDataExporter::Test/_files/product_with_no_website_option.php
      * @magentoDbIsolation disabled
      * @magentoAppIsolation enabled
-     *
+     * @dataProvider getBundleFixedProductOptionsBeforeAndAfterPriceChangeDataProvider
      */
     #[DataProvider('getBundleFixedProductOptionsBeforeAndAfterPriceChangeDataProvider')]
     public function testBundleFixedProductOptionsWithPriceDifferentThanDefault(
@@ -119,6 +120,7 @@ class BundleProductTest extends AbstractProductTestHelper
      * @magentoDataFixture Magento/Bundle/_files/dynamic_bundle_product_with_special_price.php
      * @magentoDbIsolation disabled
      * @magentoAppIsolation enabled
+     * @dataProvider getBundleDynamicProductOptionsDataProvider
      */
     #[DataProvider('getBundleDynamicProductOptionsDataProvider')]
     public function testBundleDynamicProductOptions(array $item) : void

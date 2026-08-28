@@ -59,6 +59,7 @@ class UnassignProductFromStockTest extends AbstractInventoryTestHelper
      * @throws NoSuchEntityException
      * @throws \Zend_Db_Statement_Exception
      * @magentoDataFixture Magento_InventoryDataExporter::Test/_files/products_with_sources.php
+     * @dataProvider stocksUnassignDataProvider
      */
     #[DataProvider('stocksUnassignDataProvider')]
     public function testSourceItemStockUnassigned(string $sku, array $sourcesToLeave, array $expectedData)
@@ -80,6 +81,7 @@ class UnassignProductFromStockTest extends AbstractInventoryTestHelper
      * @throws \Zend_Db_Statement_Exception
      * @throws \Magento\Framework\Validation\ValidationException
      * @magentoDataFixture Magento_InventoryDataExporter::Test/_files/products_with_sources.php
+     * @dataProvider stocksBulkUnassignDataProvider
      */
     #[DataProvider('stocksBulkUnassignDataProvider')]
     public function testSourceItemsBulkUnassign(array $skus, array $sourcesToUnassign, array $expectedData)

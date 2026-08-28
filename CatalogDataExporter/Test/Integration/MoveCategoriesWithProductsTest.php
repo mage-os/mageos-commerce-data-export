@@ -52,6 +52,7 @@ class MoveCategoriesWithProductsTest extends AbstractProductTestHelper
      * @return void
      * @throws NoSuchEntityException
      * @throws LocalizedException
+     * @dataProvider getProductCategoriesDataProvider
      */
     #[DataProvider('getProductCategoriesDataProvider')]
     public function testMoveCategoryToTopLevel(string $productSku, array $categoryData) : void

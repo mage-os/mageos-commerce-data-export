@@ -47,6 +47,7 @@ class ExportBundleOptionWithParentTest extends AbstractProductTestHelper
      *
      * @throws NoSuchEntityException
      * @throws Zend_Db_Statement_Exception
+     * @dataProvider expectedBundleOptionsWithParentData
      */
     #[DataProvider('expectedBundleOptionsWithParentData')]
     public function testExportBundleOptionsWithParentData(array $expectedSimpleProduct): void

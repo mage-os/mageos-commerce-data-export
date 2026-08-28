@@ -41,6 +41,7 @@ class GroupedProductsTest extends AbstractProductTestHelper
      * @magentoDbIsolation disabled
      * @magentoAppIsolation enabled
      * @return void
+     * @dataProvider getGroupedProductOptionsDataProvider
      */
     #[DataProvider('getGroupedProductOptionsDataProvider')]
     public function testGroupedProductOptions(array $item) : void
@@ -62,6 +63,7 @@ class GroupedProductsTest extends AbstractProductTestHelper
      * @magentoDbIsolation disabled
      * @magentoAppIsolation enabled
      * @return void
+     * @dataProvider getGroupedProductOptionsDataProvider
      */
     #[DataProvider('getGroupedProductOptionsDataProvider')]
     public function testGroupedProductOptionsInMultipleWebsites(array $item) : void

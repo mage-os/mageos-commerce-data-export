@@ -32,6 +32,7 @@ class DownloadableProductsTest extends AbstractProductTestHelper
      * @throws LocalizedException
      * @throws \Zend_Db_Statement_Exception
      * @throws \Throwable
+     * @dataProvider expectedDownloadableAttributeDataProvider
      */
     #[DataProvider('expectedDownloadableAttributeDataProvider')]
     public function testDownloadableProducts(array $expectedProductAttribute) : void

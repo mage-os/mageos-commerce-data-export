@@ -36,6 +36,7 @@ class ExportSingleProductPricePerWebsiteTest extends AbstractProductPriceTestHel
      * @magentoDataFixture Magento_ProductPriceDataExporter::Test/_files/simple_products.php
      * @param array $expectedSimpleProductPrices
      * @throws NoSuchEntityException
+     * @dataProvider expectedSimpleProductPricesDataProvider
      */
     #[DataProvider('expectedSimpleProductPricesDataProvider')]
     public function testExportSimpleProductsPrices(array $expectedSimpleProductPrices): void
@@ -49,6 +50,7 @@ class ExportSingleProductPricePerWebsiteTest extends AbstractProductPriceTestHel
      * @magentoDataFixture Magento_ProductPriceDataExporter::Test/_files/simple_products.php
      * @param array $expectedSimpleProductPrices
      * @throws NoSuchEntityException
+     * @dataProvider expectedSimpleProductRegularPricesUseDefaultDataProvider
      */
     #[DataProvider('expectedSimpleProductRegularPricesUseDefaultDataProvider')]
     public function testExportSimpleProductsRegularPricesWithUseDefault(array $expectedSimpleProductPrices): void
@@ -74,6 +76,7 @@ class ExportSingleProductPricePerWebsiteTest extends AbstractProductPriceTestHel
      * @magentoDataFixture Magento_ProductPriceDataExporter::Test/_files/simple_products.php
      * @param array $expectedSimpleProductPrices
      * @throws NoSuchEntityException
+     * @dataProvider expectedSimpleProductSpecialPricesDoNotUseDefaultDataProvider
      */
     #[DataProvider('expectedSimpleProductSpecialPricesDoNotUseDefaultDataProvider')]
     public function testExportSimpleProductsPricesWithoutUseDefault(array $expectedSimpleProductPrices): void
@@ -108,6 +111,7 @@ class ExportSingleProductPricePerWebsiteTest extends AbstractProductPriceTestHel
      * @magentoDataFixture Magento_ProductPriceDataExporter::Test/_files/simple_products.php
      * @param array $expectedSimpleProductPrices
      * @throws NoSuchEntityException
+     * @dataProvider expectedSimpleProductSpecialPricesUseDefaultDataProvider
      */
     #[DataProvider('expectedSimpleProductSpecialPricesUseDefaultDataProvider')]
     public function testExportSimpleProductsPricesWithUseDefault(array $expectedSimpleProductPrices): void
@@ -141,6 +145,7 @@ class ExportSingleProductPricePerWebsiteTest extends AbstractProductPriceTestHel
      * @magentoDataFixture Magento_ProductPriceDataExporter::Test/_files/downloadable_products.php
      * @param array $expectedDownloadableProductPricesDataProvider
      * @throws NoSuchEntityException
+     * @dataProvider expectedDownloadableProductPricesDataProvider
      */
     #[DataProvider('expectedDownloadableProductPricesDataProvider')]
     public function testExportDownloadableProductsPrices(array $expectedDownloadableProductPricesDataProvider): void

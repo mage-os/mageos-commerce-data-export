@@ -42,6 +42,7 @@ class ExportParentProductTest extends AbstractProductTestHelper
      * @magentoDataFixture Magento_ParentProductDataExporter::Test/_files/configurable_products.php
      * @throws NoSuchEntityException
      * @throws Zend_Db_Statement_Exception
+     * @dataProvider expectedSimpleConfigurableWithParentsData
      */
     #[DataProvider('expectedSimpleConfigurableWithParentsData')]
     public function testExportSimpleConfigurableProductsWithParentData(array $expectedSimpleProduct): void
@@ -73,6 +74,7 @@ class ExportParentProductTest extends AbstractProductTestHelper
      * @magentoDataFixture Magento_ParentProductDataExporter::Test/_files/grouped_products.php
      * @throws NoSuchEntityException
      * @throws Zend_Db_Statement_Exception
+     * @dataProvider expectedSimpleProductWithParentsData
      */
     #[DataProvider('expectedSimpleProductWithParentsData')]
     public function testExportSimpleProductsWithParentData(array $expectedSimpleProduct): void

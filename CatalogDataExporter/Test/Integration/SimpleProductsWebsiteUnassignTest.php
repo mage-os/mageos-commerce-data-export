@@ -50,6 +50,7 @@ class SimpleProductsWebsiteUnassignTest extends AbstractProductTestHelper
      * @throws \Magento\Framework\Exception\InputException
      * @throws \Magento\Framework\Exception\StateException
      * @throws \Zend_Db_Statement_Exception
+     * @dataProvider unassignWebsitesDataProvider
      */
     #[DataProvider('unassignWebsitesDataProvider')]
     public function testSimpleProductsOnSave(array $testData) : void
@@ -91,6 +92,7 @@ class SimpleProductsWebsiteUnassignTest extends AbstractProductTestHelper
      * @return void
      * @throws NoSuchEntityException
      * @throws \Zend_Db_Statement_Exception
+     * @dataProvider bulkUnassignWebsitesDataProvider
      */
     #[DataProvider('bulkUnassignWebsitesDataProvider')]
     public function testSimpleProductsOnBulkUpdate(array $skus, array $websites, array $expected) : void

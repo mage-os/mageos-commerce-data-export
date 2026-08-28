@@ -91,6 +91,7 @@ class ResubmitFailedFeedTest extends AbstractProductTestHelper
      * @return void
      * @throws NoSuchEntityException
      * @throws \Zend_Db_Statement_Exception
+     * @dataProvider productsWithStatusesDataProvider
      */
     #[DataProvider('productsWithStatusesDataProvider')]
     public function testResubmitFailedFeed(array $expectedProducts) : void

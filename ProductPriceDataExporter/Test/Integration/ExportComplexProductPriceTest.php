@@ -24,6 +24,7 @@ class ExportComplexProductPriceTest extends AbstractProductPriceTestHelper
      * @magentoDataFixture Magento_ProductPriceDataExporter::Test/_files/bundle_fixed_products.php
      * @throws NoSuchEntityException
      * @throws Zend_Db_Statement_Exception
+     * @dataProvider expectedBundleFixedProductPricesDataProvider
      */
     #[DataProvider('expectedBundleFixedProductPricesDataProvider')]
     public function testExportBundleFixedProductsPrices(array $expectedBundleFixedProductPricesDataProvider): void
@@ -35,6 +36,7 @@ class ExportComplexProductPriceTest extends AbstractProductPriceTestHelper
      * @magentoDataFixture Magento_ProductPriceDataExporter::Test/_files/bundle_dynamic_products.php
      * @throws NoSuchEntityException
      * @throws Zend_Db_Statement_Exception
+     * @dataProvider expectedBundleDynamicProductPricesDataProvider
      */
     #[DataProvider('expectedBundleDynamicProductPricesDataProvider')]
     public function testExportBundleDynamicProductsPrices(array $expectedBundleDynamicProductPricesDataProvider): void
@@ -46,6 +48,7 @@ class ExportComplexProductPriceTest extends AbstractProductPriceTestHelper
      * @magentoDataFixture Magento_ProductPriceDataExporter::Test/_files/configurable_regular_price_products.php
      * @throws NoSuchEntityException
      * @throws Zend_Db_Statement_Exception
+     * @dataProvider expectedConfigurableRegularProductPricesDataProvider
      */
     #[DataProvider('expectedConfigurableRegularProductPricesDataProvider')]
     public function testExportConfigurableProductsRegularPrices(array $expectedProductPricesDataProvider): void
@@ -57,6 +60,7 @@ class ExportComplexProductPriceTest extends AbstractProductPriceTestHelper
      * @magentoDataFixture Magento_ProductPriceDataExporter::Test/_files/configurable_special_and_tier_price_products.php
      * @throws NoSuchEntityException
      * @throws Zend_Db_Statement_Exception
+     * @dataProvider expectedConfigurableSpecialAndTierProductPricesDataProvider
      */
     #[DataProvider('expectedConfigurableSpecialAndTierProductPricesDataProvider')]
     public function testExportConfigurableProductsSpecialAndTierPrices(array $expectedProductPricesDataProvider): void
@@ -68,6 +72,7 @@ class ExportComplexProductPriceTest extends AbstractProductPriceTestHelper
      * @magentoDataFixture Magento_ProductPriceDataExporter::Test/_files/grouped_products_regular_prices.php
      * @throws NoSuchEntityException
      * @throws Zend_Db_Statement_Exception
+     * @dataProvider expectedGroupedProductRegularPriceDataProvider
      */
     #[DataProvider('expectedGroupedProductRegularPriceDataProvider')]
     public function testExportGroupedProductsRegularPrices(array $expectedProductPricesDataProvider): void
@@ -79,6 +84,7 @@ class ExportComplexProductPriceTest extends AbstractProductPriceTestHelper
      * @magentoDataFixture Magento_ProductPriceDataExporter::Test/_files/grouped_products_special_and_tier_prices.php
      * @throws NoSuchEntityException
      * @throws Zend_Db_Statement_Exception
+     * @dataProvider expectedGroupedSpecialAndTierProductPricesDataProvider
      */
     #[DataProvider('expectedGroupedSpecialAndTierProductPricesDataProvider')]
     public function testExportGroupedProductsSpecialAndTierPrices(array $expectedProductPricesDataProvider): void

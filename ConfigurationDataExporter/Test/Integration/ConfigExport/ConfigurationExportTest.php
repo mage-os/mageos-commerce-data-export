@@ -57,6 +57,7 @@ class ConfigurationExportTest extends TestCase
      * @return void
      * @throws \Magento\Framework\Exception\LocalizedException
      * @magentoDbIsolation enabled
+     * @dataProvider configExportDataProvider
      */
     #[DataProvider('configExportDataProvider')]
     public function testConfigUpdateExport(array $configs, array $expected): void
