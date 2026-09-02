@@ -304,6 +304,99 @@ class ConfigurableProductsTest extends AbstractProductTestHelper
     }
 
     /**
+     * A child disabled for one website must be filtered out of the configurable options only for that website.
+     *
+     * `status` is a website-scoped attribute, so it cannot differ between two store views of the same website.
+     * To prove per-store-view isolation of the batched possible-values resolver (rows keyed by storeViewCode in
+     * ProductAssignedAttributeValues), the fixture adds a store view in a SECOND website ('cde_third_store') where
+     * the child stays enabled. Disabling the child in the base website must remove its option value from the base
+     * website's store views ('default', 'fixture_second_store') but leave it present in the second website's store
+     * view - a divergence a store-key mix-up in the resolver would break. All three store views are resolved in one
+     * Options::get() call (they are flushed together), so this also exercises the cross-store batching path.
+     *
+     * @magentoDataFixture Magento_ConfigurableProductDataExporter::Test/_files/setup_configurable_products.php
+     * @magentoDataFixture Magento_ConfigurableProductDataExporter::Test/_files/second_website_store.php
+     * @magentoDbIsolation disabled
+     * @magentoAppIsolation enabled
+     * @return void
+     * @throws LocalizedException
+     * @throws NoSuchEntityException
+     * @throws Zend_Db_Statement_Exception
+     */
+    public function testConfigurableOptionsStatusFilteredPerStoreView() : void
+    {
+        $parentSku = 'configurable1';
+        // In setup_configurable_products.php children 50/60/70 map to Option 1/2/3 of first_test_configurable.
+        $disabledChildSku = 'simple_option_60';
+        $baseWebsiteStoreCode = 'fixture_second_store';
+        $secondWebsiteStoreCode = 'cde_third_store';
+
+        // Assign the configurable to the second website so it is extracted for that website's store view, where the
+        // child is not disabled and "Option 2" must therefore remain.
+        $secondWebsiteId = (int) $this->storeManager->getWebsite('cde_test_website')->getId();
+        $skusInSecondWebsite = [
+            $parentSku,
+            'simple_option_50', 'simple_option_60', 'simple_option_70',
+            'simple_option_55', 'simple_option_59', 'simple_option_65',
+        ];
+        // Assign the configurable and all its children to the second website via a direct link insert (a full
+        // product re-save would re-validate required super attributes the fixture children only set partially).
+        $productWebsiteTable = $this->resource->getTableName('catalog_product_website');
+        foreach ($skusInSecondWebsite as $skuInSecondWebsite) {
+            $entityId = (int) $this->productRepository->get($skuInSecondWebsite, true)->getId();
+            $this->connection->insertOnDuplicate(
+                $productWebsiteTable,
+                ['product_id' => $entityId, 'website_id' => $secondWebsiteId]
+            );
+        }
+
+        $baseWebsiteStoreId = (int) $this->storeManager->getStore($baseWebsiteStoreCode)->getId();
+        $productAction = Bootstrap::getObjectManager()->get(Action::class);
+        $child = $this->productRepository->get($disabledChildSku, true);
+        $parent = $this->productRepository->get($parentSku, true);
+
+        // Disable the child at a base-website store. `status` is website-scoped, so this disables it for every base
+        // website store view (admin value stays enabled), but not for the second website.
+        $productAction->updateAttributes(
+            [$child->getEntityId()],
+            [ProductAttributeInterface::CODE_STATUS => Status::STATUS_DISABLED],
+            $baseWebsiteStoreId
+        );
+        $reindexIds = [(int) $parent->getId()];
+        foreach ($skusInSecondWebsite as $skuInSecondWebsite) {
+            $reindexIds[] = (int) $this->productRepository->get($skuInSecondWebsite, true)->getId();
+        }
+        $this->partialReindex(array_values(array_unique($reindexIds)));
+
+        // "Option 2" (child simple_option_60) is disabled for the base website only; it must stay for the second.
+        $expectedLabelsPerStore = [
+            'default' => ['Option 1', 'Option 3'],
+            $baseWebsiteStoreCode => ['Option 1', 'Option 3'],
+            $secondWebsiteStoreCode => ['Option 1', 'Option 2', 'Option 3'],
+        ];
+        foreach ($expectedLabelsPerStore as $storeViewCode => $expectedLabels) {
+            $extractedParent = $this->getExtractedProduct($parentSku, $storeViewCode);
+            $firstConfigurableOption = null;
+            foreach ($extractedParent['feedData']['optionsV2'] as $option) {
+                if ($option['id'] === 'first_test_configurable') {
+                    $firstConfigurableOption = $option;
+                    break;
+                }
+            }
+            $this->assertNotNull(
+                $firstConfigurableOption,
+                sprintf('first_test_configurable option missing for store view "%s"', $storeViewCode)
+            );
+            $labels = array_map(static fn(array $value) => $value['label'], $firstConfigurableOption['values']);
+            $this->assertSame(
+                $expectedLabels,
+                $labels,
+                sprintf('Unexpected configurable option values for store view "%s"', $storeViewCode)
+            );
+        }
+    }
+
+    /**
      * Validate parent product data with virtual options
      *
      * @magentoDataFixture Magento_ConfigurableProductDataExporter::Test/_files/setup_configurable_products_with_virtual_options.php

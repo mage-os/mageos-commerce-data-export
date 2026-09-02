@@ -34,13 +34,14 @@ class CategoryMainQuery
      * Get query for provider
      *
      * @param array $ids
-     * @param int|null $scopeId
+     * @param int|int[]|null $scopeIds Store view id(s) to extract; null or empty means all store views
      *
      * @return Select
      */
-    public function getQuery(array $ids, ?int $scopeId = null) : Select
+    public function getQuery(array $ids, int|array|null $scopeIds = null) : Select
     {
         $connection = $this->resourceConnection->getConnection();
+        $scopeIds = $this->normalizeScopeIds($scopeIds);
 
         $select = $connection->select()
             ->from(
@@ -58,7 +59,7 @@ class CategoryMainQuery
 
         $storeColumns = ['storeViewCode' => 's.code', 'storeId' => 's.store_id'];
 
-        if (null === $scopeId) {
+        if (empty($scopeIds)) {
             $select->joinCross(
                 ['s' => $this->resourceConnection->getTableName('store')],
                 $storeColumns
@@ -66,7 +67,7 @@ class CategoryMainQuery
         } else {
             $select->join(
                 ['s' => $this->resourceConnection->getTableName('store')],
-                $connection->quoteInto('s.store_id = ?', $scopeId),
+                $connection->quoteInto('s.store_id IN (?)', $scopeIds),
                 $storeColumns
             );
         }
@@ -86,6 +87,24 @@ class CategoryMainQuery
                     new Expression("CONCAT('%/', sg.root_category_id)")
                 )
             );
+    }
+
+    /**
+     * Normalize the scope id argument to a list of ints (backward compatible with int|null callers).
+     *
+     * @param int|int[]|null $scopeIds
+     * @return int[]
+     */
+    private function normalizeScopeIds(int|array|null $scopeIds): array
+    {
+        if ($scopeIds === null) {
+            return [];
+        }
+        if (!is_array($scopeIds)) {
+            $scopeIds = [$scopeIds];
+        }
+
+        return array_values(array_filter(array_map('intval', $scopeIds)));
     }
 
     /**

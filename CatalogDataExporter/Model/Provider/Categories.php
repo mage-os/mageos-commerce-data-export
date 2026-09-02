@@ -15,6 +15,7 @@ use Magento\CatalogDataExporter\Model\Provider\EavAttributes\EntityEavAttributes
 use Magento\CatalogDataExporter\Model\Query\CategoryMainQuery;
 use Magento\DataExporter\Exception\UnableRetrieveData;
 use Magento\DataExporter\Export\DataProcessorInterface;
+use Magento\DataExporter\Export\ScopeResolverInterface;
 use Magento\DataExporter\Model\Indexer\FeedIndexMetadata;
 use Magento\Framework\App\ObjectManager;
 use Magento\Framework\App\ResourceConnection;
@@ -64,6 +65,11 @@ class Categories implements DataProcessorInterface
     private $ancestorStatusProvider;
 
     /**
+     * @var ScopeResolverInterface
+     */
+    private ScopeResolverInterface $scopeResolver;
+
+    /**
      * @param ResourceConnection $resourceConnection
      * @param CategoryMainQuery $categoryMainQuery
      * @param FormatterInterface $formatter
@@ -71,6 +77,7 @@ class Categories implements DataProcessorInterface
      * @param EntityEavAttributesResolver $entityEavAttributesResolver
      * @param CategoryUrlPathBuilder|null $urlPathBuilder
      * @param AncestorStatusProvider|null $ancestorStatusProvider
+     * @param ScopeResolverInterface|null $scopeResolver
      */
     public function __construct(
         ResourceConnection $resourceConnection,
@@ -79,7 +86,8 @@ class Categories implements DataProcessorInterface
         LoggerInterface $logger,
         EntityEavAttributesResolver $entityEavAttributesResolver,
         ?CategoryUrlPathBuilder $urlPathBuilder = null,
-        ?AncestorStatusProvider $ancestorStatusProvider = null
+        ?AncestorStatusProvider $ancestorStatusProvider = null,
+        ?ScopeResolverInterface $scopeResolver = null
     ) {
         $this->resourceConnection = $resourceConnection;
         $this->categoryMainQuery = $categoryMainQuery;
@@ -89,6 +97,7 @@ class Categories implements DataProcessorInterface
         $this->urlPathBuilder = $urlPathBuilder ?? ObjectManager::getInstance()->get(CategoryUrlPathBuilder::class);
         $this->ancestorStatusProvider = $ancestorStatusProvider
             ?? ObjectManager::getInstance()->get(AncestorStatusProvider::class);
+        $this->scopeResolver = $scopeResolver ?? ObjectManager::getInstance()->get(ScopeResolverInterface::class);
     }
 
     /**
@@ -107,7 +116,7 @@ class Categories implements DataProcessorInterface
         $lastChunk = null
     ): void {
         try {
-            foreach ($this->getDataBatch($arguments, $metadata->getBatchSize()) as $dataBatch) {
+            foreach ($this->getDataBatch($arguments, $metadata) as $dataBatch) {
                 $output = [];
                 [$mappedCategories, $attributesData] = $dataBatch;
                 foreach ($mappedCategories as $storeCode => $categories) {
@@ -147,40 +156,75 @@ class Categories implements DataProcessorInterface
      * Returns data batch.
      *
      * @param array $arguments
-     * @param int $batchSize
+     * @param FeedIndexMetadata $metadata
      * @return \Generator
      * @throws \Zend_Db_Statement_Exception
      */
-    private function getDataBatch(array $arguments, int $batchSize): \Generator
+    private function getDataBatch(array $arguments, FeedIndexMetadata $metadata): \Generator
     {
+        $batchSize = $metadata->getBatchSize();
         $itemN = 0;
         $queryArguments = [];
         $mappedCategories = [];
         $attributesData = [];
+        $explicitScopes = false;
         foreach ($arguments as $value) {
-            $scope = $value['scopeId'] ?? Store::DEFAULT_STORE_ID;
+            if (isset($value['scopeId'])) {
+                $explicitScopes = true;
+                $scope = $value['scopeId'];
+            } else {
+                $scope = Store::DEFAULT_STORE_ID;
+            }
             $queryArguments[$scope][$value['categoryId']] = $value['attribute_ids'] ?? [];
         }
 
         $connection = $this->resourceConnection->getConnection();
         foreach ($queryArguments as $scopeId => $categoryData) {
-            $cursor = $connection->query(
-                $this->categoryMainQuery->getQuery(\array_keys($categoryData), $scopeId ?: null)
-            );
+            foreach ($this->resolveScopeBatches((int)$scopeId, $explicitScopes, $metadata) as $scopeBatch) {
+                $cursor = $connection->query(
+                    $this->categoryMainQuery->getQuery(\array_keys($categoryData), $scopeBatch)
+                );
 
-            while ($row = $cursor->fetch()) {
-                $itemN++;
-                $mappedCategories[$row['storeViewCode']][$row['categoryId']] = $row;
-                $attributesData[$row['storeViewCode']][$row['categoryId']] = $categoryData[$row['categoryId']];
-                if ($itemN % $batchSize == 0) {
-                    yield [$mappedCategories,  $attributesData];
-                    $mappedCategories = [];
-                    $attributesData = [];
+                while ($row = $cursor->fetch()) {
+                    $itemN++;
+                    $mappedCategories[$row['storeViewCode']][$row['categoryId']] = $row;
+                    $attributesData[$row['storeViewCode']][$row['categoryId']] = $categoryData[$row['categoryId']];
+                    if ($itemN % $batchSize == 0) {
+                        yield [$mappedCategories,  $attributesData];
+                        $mappedCategories = [];
+                        $attributesData = [];
+                    }
                 }
             }
         }
 
         yield [$mappedCategories, $attributesData];
+    }
+
+    /**
+     * Resolve the store view id batches to extract for a given argument scope group.
+     *
+     * Honors an explicit non-default per-item scopeId as a single-store extraction (backward
+     * compatibility); otherwise the scope resolver decides which store views to extract (all by
+     * default, discoverable ones under ACO), chunked by the configured store-view batch size.
+     *
+     * @param int $scopeId
+     * @param bool $explicitScopes
+     * @param FeedIndexMetadata $metadata
+     * @return array
+     */
+    private function resolveScopeBatches(int $scopeId, bool $explicitScopes, FeedIndexMetadata $metadata): array
+    {
+        if ($explicitScopes && $scopeId !== Store::DEFAULT_STORE_ID) {
+            return [[$scopeId]];
+        }
+
+        $scopeIds = $this->scopeResolver->getScopes($metadata);
+        if (empty($scopeIds)) {
+            return [];
+        }
+
+        return \array_chunk($scopeIds, $metadata->getStoreViewBatchSize());
     }
 
     /**

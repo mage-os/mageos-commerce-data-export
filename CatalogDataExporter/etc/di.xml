@@ -10,6 +10,7 @@
     <preference for="Magento\CatalogDataExporter\Model\Provider\Category\Formatter\FormatterInterface" type="Magento\CatalogDataExporter\Model\Provider\Category\Formatter\Formatter" />
     <preference for="Magento\CatalogDataExporter\Model\Query\Eav\EavAttributeQueryBuilderInterface" type="Magento\CatalogDataExporter\Model\Query\Eav\EavAttributeQueryBuilder" />
     <preference for="Magento\CatalogDataExporter\Model\Provider\Product\MediaGallery\MediaGalleryFormatterInterface" type="Magento\CatalogDataExporter\Model\Provider\Product\MediaGallery\DefaultFormatter" />
+    <preference for="Magento\DataExporter\Export\ScopeResolverInterface" type="Magento\CatalogDataExporter\Model\ScopeResolver\AllStoreViewsScopeResolver" />
 
     <type name="Magento\CatalogDataExporter\Model\Provider\Product\Formatter\Formatter">
         <arguments>

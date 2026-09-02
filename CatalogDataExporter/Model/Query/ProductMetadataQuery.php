@@ -35,12 +35,18 @@ class ProductMetadataQuery
      * Get query for provider
      *
      * @param array $arguments
+     * @param int[] $scopeIds Store view id(s) to extract; empty means all store views
      * @return Select
      * @throws \Zend_Db_Select_Exception
      */
-    public function getQuery(array $arguments): Select
+    public function getQuery(array $arguments, array $scopeIds = []): Select
     {
         $connection = $this->resourceConnection->getConnection();
+
+        $scopeIds = array_values(array_filter(array_map('intval', $scopeIds)));
+        $storeCondition = empty($scopeIds)
+            ? 's.store_id != 0'
+            : $connection->quoteInto('s.store_id IN (?)', $scopeIds);
 
         return $connection->select()
             ->from(['eav' => $this->resourceConnection->getTableName('eav_attribute')], [])
@@ -59,7 +65,7 @@ class ProductMetadataQuery
             )
             ->joinLeft(
                 ['s' => $this->resourceConnection->getTableName('store')],
-                '1 = 1 AND s.store_id != 0',
+                $storeCondition,
                 ['storeViewCode' => 's.code']
             )
             ->joinLeft(

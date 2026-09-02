@@ -118,6 +118,10 @@ class InventoryData
                 ->where('s.website_id IN (?)', explode(',', (string) $stock['website_ids']))
                 ->group('e.entity_id')
                 ->group('s.store_id');
+            // Restrict to the requested store views so non-relevant store views are not extracted
+            if (!empty($storeViewCodes)) {
+                $select->where('s.code IN (?)', $storeViewCodes);
+            }
             $union[] = $select;
         }
 

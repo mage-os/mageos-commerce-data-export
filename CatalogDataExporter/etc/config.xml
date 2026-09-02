@@ -12,7 +12,14 @@
                 <products>
                     <thread_count>1</thread_count>
                     <batch_size>100</batch_size>
+                    <store_view_batch_size>10</store_view_batch_size>
                 </products>
+                <categories>
+                    <store_view_batch_size>10</store_view_batch_size>
+                </categories>
+                <productAttributes>
+                    <store_view_batch_size>10</store_view_batch_size>
+                </productAttributes>
             </feeds>
         </commerce_data_export>
     </default>

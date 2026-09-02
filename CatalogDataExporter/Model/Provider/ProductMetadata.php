@@ -11,7 +11,9 @@ use Magento\CatalogDataExporter\Model\Provider\Product\Formatter\FormatterInterf
 use Magento\CatalogDataExporter\Model\Query\ProductMetadataQuery;
 use Magento\DataExporter\Exception\UnableRetrieveData;
 use Magento\DataExporter\Export\DataProcessorInterface;
+use Magento\DataExporter\Export\ScopeResolverInterface;
 use Magento\DataExporter\Model\Indexer\FeedIndexMetadata;
+use Magento\Framework\App\ObjectManager;
 use Magento\Framework\App\ResourceConnection;
 use Magento\DataExporter\Model\Logging\CommerceDataExportLoggerInterface as LoggerInterface;
 
@@ -56,21 +58,29 @@ class ProductMetadata implements DataProcessorInterface
     private $logger;
 
     /**
+     * @var ScopeResolverInterface
+     */
+    private ScopeResolverInterface $scopeResolver;
+
+    /**
      * @param ResourceConnection $resourceConnection
      * @param ProductMetadataQuery $productMetadataQuery
      * @param FormatterInterface $formatter
      * @param LoggerInterface $logger
+     * @param ScopeResolverInterface|null $scopeResolver
      */
     public function __construct(
         ResourceConnection $resourceConnection,
         ProductMetadataQuery $productMetadataQuery,
         FormatterInterface $formatter,
-        LoggerInterface $logger
+        LoggerInterface $logger,
+        ?ScopeResolverInterface $scopeResolver = null
     ) {
         $this->resourceConnection = $resourceConnection;
         $this->productMetadataQuery = $productMetadataQuery;
         $this->formatter = $formatter;
         $this->logger = $logger;
+        $this->scopeResolver = $scopeResolver ?? ObjectManager::getInstance()->get(ScopeResolverInterface::class);
     }
 
     /**
@@ -109,17 +119,36 @@ class ProductMetadata implements DataProcessorInterface
         $node = null,
         $info = null
     ): void {
-        $output = [];
         $queryArguments = [];
         try {
             foreach ($arguments as $value) {
                 $queryArguments['id'][$value['id']] = $value['id'];
             }
+            if (empty($queryArguments)) {
+                $dataProcessorCallback($this->get([]));
+                return;
+            }
+
             $connection = $this->resourceConnection->getConnection();
-            $select = $this->productMetadataQuery->getQuery($queryArguments);
-            $cursor = $connection->query($select);
-            while ($row = $cursor->fetch()) {
-                $output[] = $this->format($row);
+            $scopeIds = $this->scopeResolver->getScopes($metadata);
+            $scopeBatches = empty($scopeIds)
+                ? []
+                : \array_chunk($scopeIds, $metadata->getStoreViewBatchSize());
+
+            // no store views to extract (e.g. all non-discoverable) - stream empty so downstream can delete
+            if (empty($scopeBatches)) {
+                $dataProcessorCallback($this->get([]));
+                return;
+            }
+
+            foreach ($scopeBatches as $scopeBatch) {
+                $output = [];
+                $select = $this->productMetadataQuery->getQuery($queryArguments, $scopeBatch);
+                $cursor = $connection->query($select);
+                while ($row = $cursor->fetch()) {
+                    $output[] = $this->format($row);
+                }
+                $dataProcessorCallback($this->get($output));
             }
         } catch (\Throwable $exception) {
             throw new UnableRetrieveData(
@@ -128,8 +157,6 @@ class ProductMetadata implements DataProcessorInterface
                 $exception
             );
         }
-
-        $dataProcessorCallback($this->get($output));
     }
 
     /**

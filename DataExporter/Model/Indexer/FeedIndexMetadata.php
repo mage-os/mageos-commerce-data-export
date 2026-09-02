@@ -361,6 +361,16 @@ class FeedIndexMetadata
     }
 
     /**
+     * Number of store views to extract per pass for store-scoped feeds.
+     *
+     * @return int
+     */
+    public function getStoreViewBatchSize(): int
+    {
+        return $this->config->getStoreViewBatchSize($this->feedName);
+    }
+
+    /**
      * Whether resync  process should be continued from the last position
      */
     public function isResyncShouldBeContinued(): bool

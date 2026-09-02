@@ -13,6 +13,7 @@ use Magento\CatalogDataExporter\Model\Provider\Product\Formatter\FormatterInterf
 use Magento\CatalogDataExporter\Model\Query\ProductMainQuery;
 use Magento\DataExporter\Exception\UnableRetrieveData;
 use Magento\DataExporter\Export\DataProcessorInterface;
+use Magento\DataExporter\Export\ScopeResolverInterface;
 use Magento\DataExporter\Model\FailedItemsRegistry;
 use Magento\DataExporter\Model\Indexer\FeedIndexMetadata;
 use Magento\Framework\App\ObjectManager;
@@ -60,6 +61,11 @@ class Products implements DataProcessorInterface
     private mixed $failedItemsRegistry;
 
     /**
+     * @var ScopeResolverInterface
+     */
+    private ScopeResolverInterface $scopeResolver;
+
+    /**
      * @param ResourceConnection $resourceConnection
      * @param ProductMainQuery $productMainQuery
      * @param FormatterInterface $formatter
@@ -67,6 +73,7 @@ class Products implements DataProcessorInterface
      * @param EntityEavAttributesResolver $entityEavAttributesResolver
      * @param array $requiredAttributes
      * @param FailedItemsRegistry|null $failedRegistry
+     * @param ScopeResolverInterface|null $scopeResolver
      */
     public function __construct(
         ResourceConnection $resourceConnection,
@@ -75,7 +82,8 @@ class Products implements DataProcessorInterface
         LoggerInterface $logger,
         EntityEavAttributesResolver $entityEavAttributesResolver,
         array $requiredAttributes = [],
-        ?FailedItemsRegistry $failedRegistry = null
+        ?FailedItemsRegistry $failedRegistry = null,
+        ?ScopeResolverInterface $scopeResolver = null
     ) {
         $this->resourceConnection = $resourceConnection;
         $this->productMainQuery = $productMainQuery;
@@ -85,6 +93,8 @@ class Products implements DataProcessorInterface
         $this->requiredAttributes = $requiredAttributes;
         $this->failedItemsRegistry = $failedRegistry ??
             ObjectManager::getInstance()->get(FailedItemsRegistry::class);
+        $this->scopeResolver = $scopeResolver ??
+            ObjectManager::getInstance()->get(ScopeResolverInterface::class);
     }
 
     /**
@@ -111,8 +121,14 @@ class Products implements DataProcessorInterface
         $mappedProducts = [];
         $attributesData = [];
 
+        $explicitScopes = false;
         foreach ($arguments as $value) {
-            $scope = $value['scopeId'] ?? Store::DEFAULT_STORE_ID;
+            if (isset($value['scopeId'])) {
+                $explicitScopes = true;
+                $scope = $value['scopeId'];
+            } else {
+                $scope = Store::DEFAULT_STORE_ID;
+            }
             $queryArguments[$scope][$value['productId']] = $value['attribute_ids'] ?? [];
         }
 
@@ -120,37 +136,42 @@ class Products implements DataProcessorInterface
         $notFoundByScope = [];
 
         foreach ($queryArguments as $scopeId => $productData) {
-            $storeViewItemN = [];
-            $cursor = $connection->query(
-                $this->productMainQuery->getQuery(\array_keys($productData), $scopeId ?: null)
-            );
+            $foundProductIds = [];
+            foreach ($this->resolveScopeBatches((int)$scopeId, $explicitScopes, $metadata) as $scopeBatch) {
+                $storeViewItemN = [];
+                $cursor = $connection->query(
+                    $this->productMainQuery->getQuery(\array_keys($productData), $scopeBatch)
+                );
 
-            while ($row = $cursor->fetch()) {
-                $storeViewCode = $row['storeViewCode'];
-                $productId = $row['productId'];
+                while ($row = $cursor->fetch()) {
+                    $storeViewCode = $row['storeViewCode'];
+                    $productId = $row['productId'];
+                    $foundProductIds[$productId] = true;
 
-                if (!isset($storeViewItemN[$storeViewCode])) {
-                    $storeViewItemN[$storeViewCode] = 0;
-                }
-                $storeViewItemN[$storeViewCode]++;
+                    if (!isset($storeViewItemN[$storeViewCode])) {
+                        $storeViewItemN[$storeViewCode] = 0;
+                    }
+                    $storeViewItemN[$storeViewCode]++;
 
-                $mappedProducts[$storeViewCode][$productId] = $row;
-                $attributesData[$storeViewCode][$productId] = $productData[$productId];
+                    $mappedProducts[$storeViewCode][$productId] = $row;
+                    $attributesData[$storeViewCode][$productId] = $productData[$productId];
 
-                if ($storeViewItemN[$storeViewCode] % $metadata->getBatchSize() == 0
-                    || count($mappedProducts) % $metadata->getBatchSize() == 0) {
-                    $this->processProducts(
-                        $mappedProducts,
-                        $attributesData,
-                        $dataProcessorCallback,
-                        $storeViewCode
-                    );
-                    unset($mappedProducts[$storeViewCode], $attributesData[$storeViewCode]);
+                    if ($storeViewItemN[$storeViewCode] % $metadata->getBatchSize() == 0
+                        || count($mappedProducts) % $metadata->getBatchSize() == 0) {
+                        $this->processProducts(
+                            $mappedProducts,
+                            $attributesData,
+                            $dataProcessorCallback,
+                            $storeViewCode
+                        );
+                        unset($mappedProducts[$storeViewCode], $attributesData[$storeViewCode]);
+                    }
                 }
             }
 
-            if (empty($storeViewItemN)) {
-                $notFoundByScope[$scopeId] = \array_keys($productData);
+            $missingProductIds = \array_diff(\array_keys($productData), \array_keys($foundProductIds));
+            if (!empty($missingProductIds)) {
+                $notFoundByScope[$scopeId] = $missingProductIds;
             }
         }
 
@@ -167,6 +188,33 @@ class Products implements DataProcessorInterface
                 )
             );
         }
+    }
+
+    /**
+     * Resolve the store view id batches to extract for a given argument scope group.
+     *
+     * When a 3rd-party caller injects an explicit non-default scopeId per item, that single store
+     * view is honored as-is (backward compatibility). Otherwise the scope resolver decides which
+     * store views to extract (all store views by default, discoverable ones under ACO) and the list
+     * is chunked by the configured store-view batch size.
+     *
+     * @param int $scopeId
+     * @param bool $explicitScopes
+     * @param FeedIndexMetadata $metadata
+     * @return array
+     */
+    private function resolveScopeBatches(int $scopeId, bool $explicitScopes, FeedIndexMetadata $metadata): array
+    {
+        if ($explicitScopes && $scopeId !== Store::DEFAULT_STORE_ID) {
+            return [[$scopeId]];
+        }
+
+        $scopeIds = $this->scopeResolver->getScopes($metadata);
+        if (empty($scopeIds)) {
+            return [];
+        }
+
+        return \array_chunk($scopeIds, $metadata->getStoreViewBatchSize());
     }
 
     /**

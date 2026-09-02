@@ -98,6 +98,9 @@ class CustomOptions
         foreach ($productOptions as $option) {
             $optionIds[] = $option['option_id'];
         }
+        if (empty($optionIds)) {
+            return $productOptions;
+        }
         $optionValues = $this->customOptionValues->query(
             [
                 'option_ids' => $optionIds,

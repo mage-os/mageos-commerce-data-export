@@ -26,6 +26,8 @@ class Config
      */
     private const EXPORTER_BATCH_SIZE = 'batch-size';
 
+    private const STORE_VIEW_BATCH_SIZE_DEFAULT = 10;
+
     /**
      * Pass option --continue-resync to continue `saas:resync` process from the last position,
      * for example: bin/magento saas:resync --feed=products --continue-resync
@@ -94,6 +96,21 @@ class Config
             ?? $this->scopeConfig->getValue($configPath) ?? $this->defaultBatchSize;
 
         return (int)$batchSize;
+    }
+
+    /**
+     * Number of store views to extract per pass for store-scoped feeds.
+     *
+     * @param string $feedName
+     * @return int
+     */
+    public function getStoreViewBatchSize(string $feedName): int
+    {
+        $configPath = sprintf('commerce_data_export/feeds/%s/store_view_batch_size', $feedName);
+        $storeViewBatchSize = $this->scopeConfig->getValue($configPath) ?? self::STORE_VIEW_BATCH_SIZE_DEFAULT;
+
+        // never allow 0 or negative - array_chunk() requires a positive size
+        return max(1, (int)$storeViewBatchSize);
     }
 
     /**

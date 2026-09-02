@@ -8,9 +8,9 @@ declare(strict_types=1);
 namespace Magento\ConfigurableProductDataExporter\Model\Provider\Product;
 
 use Magento\Catalog\Model\Product;
-use Magento\Catalog\Model\Product\Attribute\Source\Status;
 use Magento\CatalogDataExporter\Model\Provider\Product\OptionProviderInterface;
 use Magento\ConfigurableProduct\Model\Product\Type\Configurable;
+use Magento\ConfigurableProductDataExporter\Model\Query\ProductAssignedAttributeValues;
 use Magento\ConfigurableProductDataExporter\Model\Query\ProductOptionQuery;
 use Magento\ConfigurableProductDataExporter\Model\Query\ProductOptionValueQuery;
 use Magento\DataExporter\Exception\UnableRetrieveData;
@@ -19,8 +19,6 @@ use Magento\DataExporter\Model\Logging\CommerceDataExportLoggerInterface as Logg
 use Magento\Eav\Model\Config;
 use Magento\Framework\App\ObjectManager;
 use Magento\Framework\App\ResourceConnection;
-use Magento\Framework\DB\Sql\ColumnValueExpression;
-use Magento\Framework\DB\Sql\Expression;
 use Magento\Framework\Exception\LocalizedException;
 use Magento\Swatches\Helper\Media as MediaHelper;
 use Magento\Swatches\Model\Swatch;
@@ -82,6 +80,11 @@ class Options implements OptionProviderInterface
     private FailedItemsRegistry $failedItemsRegistry;
 
     /**
+     * @var ProductAssignedAttributeValues
+     */
+    private ProductAssignedAttributeValues $assignedAttributeValues;
+
+    /**
      * @param ResourceConnection $resourceConnection
      * @param ProductOptionQuery $productOptionQuery
      * @param ProductOptionValueQuery $productOptionValueQuery
@@ -90,6 +93,7 @@ class Options implements OptionProviderInterface
      * @param Config $eavConfig
      * @param LoggerInterface $logger
      * @param FailedItemsRegistry|null $failedRegistry
+     * @param ProductAssignedAttributeValues|null $assignedAttributeValues
      */
     public function __construct(
         ResourceConnection $resourceConnection,
@@ -99,7 +103,8 @@ class Options implements OptionProviderInterface
         MediaHelper $mediaHelper,
         ?Config $eavConfig,
         LoggerInterface $logger,
-        ?FailedItemsRegistry $failedRegistry = null
+        ?FailedItemsRegistry $failedRegistry = null,
+        ?ProductAssignedAttributeValues $assignedAttributeValues = null
     ) {
         $this->resourceConnection = $resourceConnection;
         $this->productOptionQuery = $productOptionQuery;
@@ -110,6 +115,8 @@ class Options implements OptionProviderInterface
         $this->logger = $logger;
         $this->failedItemsRegistry = $failedRegistry ??
             ObjectManager::getInstance()->get(FailedItemsRegistry::class);
+        $this->assignedAttributeValues = $assignedAttributeValues ??
+            ObjectManager::getInstance()->get(ProductAssignedAttributeValues::class);
     }
 
     /**
@@ -121,75 +128,6 @@ class Options implements OptionProviderInterface
     private function getTable(string $reference)
     {
         return $this->resourceConnection->getTableName($reference);
-    }
-
-    /**
-     * Returns possible attribute values for a product
-     *
-     * @param int $entityId
-     * @param int $attributeId
-     * @param string $storeCode
-     * @return array
-     */
-    private function getPossibleAttributeValues(int $entityId, int $attributeId, string $storeCode): array
-    {
-        $connection = $this->resourceConnection->getConnection();
-        $joinField = $connection->getAutoIncrementField($this->getTable('catalog_product_entity'));
-        $select = $connection->select()
-            ->from(['cpe' => $this->getTable('catalog_product_entity')], [])
-            ->join(
-                ['psl' => $this->getTable('catalog_product_super_link')],
-                sprintf('psl.parent_id = cpe.%s', $joinField),
-                []
-            )
-            ->join(
-                ['cpc' => $this->getTable('catalog_product_entity')],
-                'cpc.entity_id = psl.product_id',
-                []
-            )
-            ->join(
-                ['cpi' => $this->getTable('catalog_product_entity_int')],
-                sprintf(
-                    'cpi.%1$s = cpc.%1$s AND cpi.store_id = 0 AND cpi.attribute_id = %2$d',
-                    $joinField,
-                    $attributeId
-                ),
-                []
-            )
-            ->where('cpe.entity_id = ?', $entityId)
-            ->columns(
-                new ColumnValueExpression('DISTINCT cpi.value')
-            );
-
-        $statusAttributeId = $this->getStatusAttributeId();
-        if (null !== $statusAttributeId) {
-            $select->joinInner(
-                ['s' => $this->resourceConnection->getTableName('store')],
-                $connection->quoteInto('s.code =  ?', $storeCode),
-                []
-            )
-            ->joinLeft(
-                ['eav' => $this->resourceConnection->getTableName('catalog_product_entity_int')],
-                \sprintf('cpc.%1$s = eav.%1$s', $joinField) .
-                $connection->quoteInto(' AND eav.attribute_id = ?', $statusAttributeId) .
-                ' AND eav.store_id = 0',
-                []
-            )
-            ->joinLeft(
-                ['eav_store' => $this->resourceConnection->getTableName('catalog_product_entity_int')],
-                \sprintf('cpc.%1$s = eav_store.%1$s', $joinField) .
-                ' AND eav_store.attribute_id = eav.attribute_id' .
-                ' AND eav_store.store_id = s.store_id',
-                [
-                    'status' => new Expression(
-                        'IF (eav_store.value_id, eav_store.value, eav.value)'
-                    ),
-                ]
-            )
-            ->having('status != ?', Status::STATUS_DISABLED);
-        }
-
-        return $connection->fetchCol($select);
     }
 
     /**
@@ -339,10 +277,33 @@ class Options implements OptionProviderInterface
         try {
             $options = [];
             $optionValuesData = $this->getOptionValuesData($queryArguments);
+
+            // Resolve the possible attribute values for the whole batch with a single pair of queries instead of
+            // one query per (product, attribute, store) row. The error is captured (not thrown) so that per-row
+            // failure isolation via FailedItemsRegistry is preserved below, matching the former behavior.
+            $possibleValuesMap = [];
+            $possibleValuesError = null;
+            try {
+                $possibleValuesMap = $this->assignedAttributeValues->getAssignedValues(
+                    array_values($queryArguments['productId']),
+                    $this->getAttributeIds($queryArguments),
+                    array_values($queryArguments['storeViewCode']),
+                    $this->getStatusAttributeId()
+                );
+            } catch (\Throwable $exception) {
+                $possibleValuesError = $exception;
+            }
+
             $select = $this->productOptionQuery->getQuery($queryArguments);
             $cursor = $this->resourceConnection->getConnection()->query($select);
             while ($row = $cursor->fetch()) {
-                $options = $this->getOptions($row, $options, $optionValuesData);
+                $options = $this->getOptions(
+                    $row,
+                    $options,
+                    $optionValuesData,
+                    $possibleValuesMap,
+                    $possibleValuesError
+                );
             }
             uasort($options, fn(array $a, array $b) => $a['optionsV2']['sortOrder'] <=> $b['optionsV2']['sortOrder']);
         } catch (\Throwable $exception) {
@@ -378,16 +339,25 @@ class Options implements OptionProviderInterface
      * @param mixed $row
      * @param array $options
      * @param array $optionValuesData
+     * @param array $possibleValuesMap [productId][attributeId][storeViewCode] => list of value ids
+     * @param \Throwable|null $possibleValuesError error captured while resolving $possibleValuesMap, if any
      * @return array
      */
-    private function getOptions(mixed $row, array $options, array $optionValuesData): array
-    {
+    private function getOptions(
+        mixed $row,
+        array $options,
+        array $optionValuesData,
+        array $possibleValuesMap,
+        ?\Throwable $possibleValuesError
+    ): array {
         try {
-            $filter = $this->getPossibleAttributeValues(
-                (int)$row['productId'],
-                (int)$row['attribute_id'],
-                $row['storeViewCode']
-            );
+            if ($possibleValuesError !== null) {
+                // Reproduce the former per-row failure isolation when the batched query failed.
+                throw $possibleValuesError;
+            }
+
+            $filter = $possibleValuesMap[(int)$row['productId']][(int)$row['attribute_id']][$row['storeViewCode']]
+                ?? [];
 
             $key = $this->getOptionKey($row);
             $options[$key] ??= $this->formatOptionsRow($row);
