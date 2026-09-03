@@ -6,22 +6,22 @@
 
 declare(strict_types=1);
 
-namespace Magento\CatalogDataExporter\Plugin\Eav;
+namespace Magento\CategoryAttributeDataExporter\Plugin\Eav;
 
 use Magento\CatalogDataExporter\Model\Eav\AttributeOptionLabelChangeResync;
 use Magento\Eav\Model\ResourceModel\Entity\Attribute as AttributeResource;
 use Magento\Framework\Model\AbstractModel;
 
 /**
- * Plugin that triggers {@see AttributeOptionLabelChangeResync} (configured for products via
- * di.xml) around attribute save, to keep the products feed in sync with option label changes.
+ * Plugin that triggers {@see AttributeOptionLabelChangeResync} (configured for categories via
+ * di.xml) around attribute save, to keep the categories feed in sync with option label changes.
  */
-class ResyncProductsOnAttributeOptionLabelChange
+class ResyncCategoriesOnAttributeOptionLabelChange
 {
     /**
-     * @param AttributeOptionLabelChangeResync $productResync
+     * @param AttributeOptionLabelChangeResync $categoryResync
      */
-    public function __construct(private readonly AttributeOptionLabelChangeResync $productResync)
+    public function __construct(private readonly AttributeOptionLabelChangeResync $categoryResync)
     {
     }
 
@@ -40,9 +40,9 @@ class ResyncProductsOnAttributeOptionLabelChange
         callable $proceed,
         AbstractModel $object
     ): AttributeResource {
-        $oldLabels = $this->productResync->beforeSave($object);
+        $oldLabels = $this->categoryResync->beforeSave($object);
         $result = $proceed($object);
-        $this->productResync->afterSave($object, $oldLabels);
+        $this->categoryResync->afterSave($object, $oldLabels);
 
         return $result;
     }

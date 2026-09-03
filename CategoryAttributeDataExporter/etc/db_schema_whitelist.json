@@ -1,0 +1,12 @@
+{
+    "cde_category_attributes_feed": {
+        "constraint": {
+            "PRIMARY": true,
+            "CDE_CATEGORY_ATTRIBUTES_FEED_FEED_ID": true
+        },
+        "index": {
+            "CDE_CATEGORY_ATTRIBUTES_FEED_SOURCE_ENTITY_ID_MODIFIED_AT": true,
+            "CDE_CATEGORY_ATTRIBUTES_FEED_STATUS": true
+        }
+    }
+}

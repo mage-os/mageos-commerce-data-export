@@ -23,8 +23,8 @@
         view_id="cde_product_attributes_feed"
         class="Magento\CatalogDataExporter\Model\Indexer\ProductAttributeFeedIndex"
     >
-        <title translate="true">Catalog Attributes Feed</title>
-        <description translate="true">Collects data for Catalog Attributes</description>
+        <title translate="true">Product attributes metadata feed</title>
+        <description translate="true">Collects product attributes matadata</description>
     </indexer>
 
     <indexer

@@ -361,7 +361,9 @@
 
     <type name="Magento\CatalogDataExporter\Model\Provider\ProductMetadata">
         <arguments>
+            <argument name="metadataQuery" xsi:type="object">Magento\CatalogDataExporter\Model\Query\ProductMetadataQuery</argument>
             <argument name="formatter" xsi:type="object">Magento\CatalogDataExporter\Model\Provider\Product\Formatter\MetadataFormatter</argument>
+            <argument name="attributeType" xsi:type="string">catalog_product</argument>
         </arguments>
     </type>
     <virtualType name="Magento\CatalogDataExporter\Model\ProductMetadataFeed" type="Magento\DataExporter\Model\Feed">
@@ -535,9 +537,21 @@
         </arguments>
     </type>
 
-    <!-- handle product attribute deletion  -->
+    <!-- handle product/category attribute deletion  -->
     <type name="Magento\Catalog\Model\ResourceModel\Eav\Attribute">
         <plugin name="exporter-reindex-on-product-attribute-delete" type="Magento\CatalogDataExporter\Plugin\Eav\Attribute\ProductAttributeDelete"/>
+    </type>
+    <virtualType name="Magento\CatalogDataExporter\Model\Eav\ProductAttributeDeleteResync" type="Magento\CatalogDataExporter\Model\Eav\AttributeDeleteResync">
+        <arguments>
+            <argument name="entityInterface" xsi:type="string">Magento\Catalog\Api\Data\ProductInterface</argument>
+            <argument name="feedMetadata" xsi:type="object">Magento\CatalogDataExporter\Model\Indexer\ProductFeedIndexMetadata</argument>
+            <argument name="invalidationEvent" xsi:type="string">product_attribute_deleted</argument>
+        </arguments>
+    </virtualType>
+    <type name="Magento\CatalogDataExporter\Plugin\Eav\Attribute\ProductAttributeDelete">
+        <arguments>
+            <argument name="productAttributeDeleteResync" xsi:type="object">Magento\CatalogDataExporter\Model\Eav\ProductAttributeDeleteResync</argument>
+        </arguments>
     </type>
 
     <type name="Magento\DataExporter\Export\Processor">
@@ -568,6 +582,19 @@
     <type name="Magento\Eav\Model\ResourceModel\Entity\Attribute">
         <plugin name="data-exporter-schedule-product-update-on-attribute-option-label-change" type="Magento\CatalogDataExporter\Plugin\Eav\ResyncProductsOnAttributeOptionLabelChange"/>
     </type>
+    <virtualType name="Magento\CatalogDataExporter\Model\Eav\ProductAttributeOptionLabelChangeResync" type="Magento\CatalogDataExporter\Model\Eav\AttributeOptionLabelChangeResync">
+        <arguments>
+            <argument name="entityTypeCode" xsi:type="string">catalog_product</argument>
+            <argument name="entityInterface" xsi:type="string">Magento\Catalog\Api\Data\ProductInterface</argument>
+            <argument name="mainTable" xsi:type="string">catalog_product_entity</argument>
+            <argument name="feedIndexerId" xsi:type="string">catalog_data_exporter_products</argument>
+        </arguments>
+    </virtualType>
+    <type name="Magento\CatalogDataExporter\Plugin\Eav\ResyncProductsOnAttributeOptionLabelChange">
+        <arguments>
+            <argument name="productResync" xsi:type="object">Magento\CatalogDataExporter\Model\Eav\ProductAttributeOptionLabelChangeResync</argument>
+        </arguments>
+    </type>
     <type name="Magento\DataExporter\Model\FeedMetadataPool">
         <arguments>
             <argument name="classMap" xsi:type="array">
@@ -580,10 +607,20 @@
 
     <type name="Magento\CatalogDataExporter\Model\Query\ProductAttributeQuery">
         <arguments>
+            <argument name="mainTable" xsi:type="string">catalog_product_entity</argument>
+            <argument name="entityType" xsi:type="string">Magento\Catalog\Api\Data\ProductInterface</argument>
+            <argument name="entityIdField" xsi:type="string">productId</argument>
             <argument name="systemAttributes" xsi:type="array">
                 <item name="news_from_date" xsi:type="string">news_from_date</item>
                 <item name="news_to_date" xsi:type="string">news_to_date</item>
             </argument>
+        </arguments>
+    </type>
+    <type name="Magento\CatalogDataExporter\Model\Provider\Product\Attributes">
+        <arguments>
+            <argument name="attributeQuery" xsi:type="object">Magento\CatalogDataExporter\Model\Query\ProductAttributeQuery</argument>
+            <argument name="attributeMetadata" xsi:type="object">Magento\CatalogDataExporter\Model\Provider\Product\AttributeMetadata</argument>
+            <argument name="entityIdField" xsi:type="string">productId</argument>
         </arguments>
     </type>
 

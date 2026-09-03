@@ -1,0 +1,162 @@
+<?xml version="1.0"?>
+<!--
+/**
+ * Copyright 2026 Adobe
+ * All Rights Reserved.
+ */
+-->
+<config xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="urn:magento:framework:ObjectManager/etc/config.xsd">
+
+    <!-- Category Attributes feed -->
+    <virtualType name="Magento\CategoryAttributeDataExporter\Model\Indexer\CategoryAttributeFeedIndexMetadata" type="Magento\DataExporter\Model\Indexer\FeedIndexMetadata">
+        <arguments>
+            <argument name="feedName" xsi:type="string">categoryAttributes</argument>
+            <argument name="indexerId" xsi:type="string">catalog_data_exporter_category_attributes</argument>
+            <argument name="feedSummary" xsi:type="string">Category Attributes Feed</argument>
+            <argument name="feedIdentity" xsi:type="string">id</argument>
+            <argument name="sourceTableName" xsi:type="string">eav_attribute</argument>
+            <argument name="sourceTableField" xsi:type="string">attribute_id</argument>
+            <argument name="feedTableName" xsi:type="string">cde_category_attributes_feed</argument>
+            <argument name="feedTableMutableColumns" xsi:type="array">
+                <item name="feed_data" xsi:type="string">feed_data</item>
+                <item name="is_deleted" xsi:type="string">is_deleted</item>
+            </argument>
+            <argument name="entitiesRemovable" xsi:type="boolean">true</argument>
+            <argument name="exportImmediately" xsi:type="boolean">true</argument>
+            <argument name="persistExportedFeed" xsi:type="init_parameter">Magento\DataExporter\Model\ExportFeedInterface::PERSIST_EXPORTED_FEED</argument>
+            <argument name="minimalPayload" xsi:type="array">
+                <item name="websiteCode" xsi:type="string">websiteCode</item>
+                <item name="storeCode" xsi:type="string">storeCode</item>
+                <item name="storeViewCode" xsi:type="string">storeViewCode</item>
+                <item name="attributeCode" xsi:type="string">attributeCode</item>
+                <item name="attributeType" xsi:type="string">attributeType</item>
+                <item name="modifiedAt" xsi:type="string">modifiedAt</item>
+            </argument>
+            <argument name="feedItemIdentifiers" xsi:type="array">
+                <item name="attributeCode" xsi:type="string">attributeCode</item>
+                <item name="storeViewCode" xsi:type="string">storeViewCode</item>
+            </argument>
+        </arguments>
+    </virtualType>
+    <virtualType name="Magento\CategoryAttributeDataExporter\Model\Indexer\CategoryAttributeFeedIndex" type="Magento\DataExporter\Model\Indexer\FeedIndexer">
+        <arguments>
+            <argument name="feedIndexMetadata" xsi:type="object">Magento\CategoryAttributeDataExporter\Model\Indexer\CategoryAttributeFeedIndexMetadata</argument>
+        </arguments>
+    </virtualType>
+    <virtualType name="Magento\CategoryAttributeDataExporter\Model\CategoryMetadataFeed" type="Magento\DataExporter\Model\Feed">
+        <arguments>
+            <argument name="feedIndexMetadata" xsi:type="object">Magento\CategoryAttributeDataExporter\Model\Indexer\CategoryAttributeFeedIndexMetadata</argument>
+        </arguments>
+    </virtualType>
+
+    <!-- Category attributes metadata feed ("categoryAttributes") -->
+    <virtualType name="Magento\CategoryAttributeDataExporter\Model\Query\Eav\CategoryAttributeMetadataQuery" type="Magento\CatalogDataExporter\Model\Query\Eav\EavAttributeMetadataQuery">
+        <arguments>
+            <argument name="entityTypeCode" xsi:type="string">catalog_category</argument>
+            <argument name="includeOnlyUserDefinedAttributes" xsi:type="boolean">true</argument>
+        </arguments>
+    </virtualType>
+    <virtualType name="Magento\CategoryAttributeDataExporter\Model\Provider\EavAttributes\CategoryAttributeMetadataProvider" type="Magento\CatalogDataExporter\Model\Provider\EavAttributes\EavAttributeMetadataProvider">
+        <arguments>
+            <argument name="metadataQuery" xsi:type="object">Magento\CategoryAttributeDataExporter\Model\Query\Eav\CategoryAttributeMetadataQuery</argument>
+            <argument name="formatter" xsi:type="object">Magento\CatalogDataExporter\Model\Provider\Product\Formatter\MetadataFormatter</argument>
+            <argument name="attributeType" xsi:type="string">catalog_category</argument>
+            <argument name="excludeAttributes" xsi:type="array">
+                <item name="automatic_sorting" xsi:type="string">automatic_sorting</item>
+            </argument>
+        </arguments>
+    </virtualType>
+
+    <!-- Category custom attribute values (feed field "attributes") -->
+    <virtualType name="Magento\CategoryAttributeDataExporter\Model\Provider\EavAttributes\CategoryEavAttributeOptionValueResolver" type="Magento\CatalogDataExporter\Model\Provider\EavAttributes\EavAttributeOptionValueResolver">
+        <arguments>
+            <argument name="entityTable" xsi:type="string">catalog_category_entity</argument>
+        </arguments>
+    </virtualType>
+    <virtualType name="Magento\CategoryAttributeDataExporter\Model\Query\Eav\CategoryCustomAttributesQuery" type="Magento\CatalogDataExporter\Model\Query\Eav\EntityCustomAttributesQuery">
+        <arguments>
+            <argument name="mainTable" xsi:type="string">catalog_category_entity</argument>
+            <argument name="entityType" xsi:type="string">Magento\Catalog\Api\Data\CategoryInterface</argument>
+            <argument name="entityIdField" xsi:type="string">categoryId</argument>
+        </arguments>
+    </virtualType>
+    <virtualType name="Magento\CategoryAttributeDataExporter\Model\Provider\EavAttributes\CategoryCustomAttributesProvider" type="Magento\CatalogDataExporter\Model\Provider\EavAttributes\EntityCustomAttributesProvider">
+        <arguments>
+            <argument name="attributeQuery" xsi:type="object">Magento\CategoryAttributeDataExporter\Model\Query\Eav\CategoryCustomAttributesQuery</argument>
+            <argument name="attributeMetadata" xsi:type="object">Magento\CategoryAttributeDataExporter\Model\Provider\EavAttributes\CategoryEavAttributeOptionValueResolver</argument>
+            <argument name="entityIdField" xsi:type="string">categoryId</argument>
+        </arguments>
+    </virtualType>
+
+    <type name="Magento\DataExporter\Model\FeedPool">
+        <arguments>
+            <argument name="classMap" xsi:type="array">
+                <item name="categoryAttributes" xsi:type="string">Magento\CategoryAttributeDataExporter\Model\CategoryMetadataFeed</item>
+            </argument>
+        </arguments>
+    </type>
+    <type name="Magento\DataExporter\Model\FeedMetadataPool">
+        <arguments>
+            <argument name="classMap" xsi:type="array">
+                <item name="categoryAttributes" xsi:type="object">Magento\CategoryAttributeDataExporter\Model\Indexer\CategoryAttributeFeedIndexMetadata</item>
+            </argument>
+        </arguments>
+    </type>
+
+    <!-- Indexes mass-invalidation logic -->
+    <type name="Magento\DataExporter\Service\IndexInvalidationManager">
+        <arguments>
+            <argument name="invalidationEvents" xsi:type="array">
+                <item name="category_attribute_deleted" xsi:type="array">
+                    <item name="categories" xsi:type="string">catalog_data_exporter_categories</item>
+                    <item name="category_attributes" xsi:type="string">catalog_data_exporter_category_attributes</item>
+                </item>
+                <!-- category attributes are per store view, so re-sync them on scope changes -->
+                <item name="store_changed" xsi:type="array">
+                    <item name="category_attributes" xsi:type="string">catalog_data_exporter_category_attributes</item>
+                </item>
+                <item name="website_changed" xsi:type="array">
+                    <item name="category_attributes" xsi:type="string">catalog_data_exporter_category_attributes</item>
+                </item>
+                <item name="group_changed" xsi:type="array">
+                    <item name="category_attributes" xsi:type="string">catalog_data_exporter_category_attributes</item>
+                </item>
+            </argument>
+        </arguments>
+    </type>
+
+    <!-- handle category attribute deletion -->
+    <type name="Magento\Catalog\Model\ResourceModel\Eav\Attribute">
+        <plugin name="exporter-reindex-on-category-attribute-delete" type="Magento\CategoryAttributeDataExporter\Plugin\Eav\Attribute\CategoryAttributeDelete"/>
+    </type>
+    <virtualType name="Magento\CategoryAttributeDataExporter\Model\Eav\CategoryAttributeDeleteResync" type="Magento\CatalogDataExporter\Model\Eav\AttributeDeleteResync">
+        <arguments>
+            <argument name="entityInterface" xsi:type="string">Magento\Catalog\Api\Data\CategoryInterface</argument>
+            <argument name="feedMetadata" xsi:type="object">Magento\CatalogDataExporter\Model\Indexer\CategoryFeedIndexMetadata</argument>
+            <argument name="invalidationEvent" xsi:type="string">category_attribute_deleted</argument>
+        </arguments>
+    </virtualType>
+    <type name="Magento\CategoryAttributeDataExporter\Plugin\Eav\Attribute\CategoryAttributeDelete">
+        <arguments>
+            <argument name="categoryAttributeDeleteResync" xsi:type="object">Magento\CategoryAttributeDataExporter\Model\Eav\CategoryAttributeDeleteResync</argument>
+        </arguments>
+    </type>
+
+    <!-- handle category attribute option label change -->
+    <type name="Magento\Eav\Model\ResourceModel\Entity\Attribute">
+        <plugin name="data-exporter-schedule-category-update-on-attribute-option-label-change" type="Magento\CategoryAttributeDataExporter\Plugin\Eav\ResyncCategoriesOnAttributeOptionLabelChange"/>
+    </type>
+    <virtualType name="Magento\CategoryAttributeDataExporter\Model\Eav\CategoryAttributeOptionLabelChangeResync" type="Magento\CatalogDataExporter\Model\Eav\AttributeOptionLabelChangeResync">
+        <arguments>
+            <argument name="entityTypeCode" xsi:type="string">catalog_category</argument>
+            <argument name="entityInterface" xsi:type="string">Magento\Catalog\Api\Data\CategoryInterface</argument>
+            <argument name="mainTable" xsi:type="string">catalog_category_entity</argument>
+            <argument name="feedIndexerId" xsi:type="string">catalog_data_exporter_categories</argument>
+        </arguments>
+    </virtualType>
+    <type name="Magento\CategoryAttributeDataExporter\Plugin\Eav\ResyncCategoriesOnAttributeOptionLabelChange">
+        <arguments>
+            <argument name="categoryResync" xsi:type="object">Magento\CategoryAttributeDataExporter\Model\Eav\CategoryAttributeOptionLabelChangeResync</argument>
+        </arguments>
+    </type>
+</config>

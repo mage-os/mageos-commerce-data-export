@@ -1,0 +1,18 @@
+<?xml version="1.0"?>
+<!--
+/**
+ * Copyright 2026 Adobe
+ * All Rights Reserved.
+ */
+-->
+<config xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="urn:magento:module:Magento_Store:etc/config.xsd">
+    <default>
+        <commerce_data_export>
+            <feeds>
+                <categoryAttributes>
+                    <store_view_batch_size>10</store_view_batch_size>
+                </categoryAttributes>
+            </feeds>
+        </commerce_data_export>
+    </default>
+</config>

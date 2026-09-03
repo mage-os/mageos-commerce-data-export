@@ -22,6 +22,7 @@
         "magento/module-inventory-data-exporter": "self.version",
         "magento/module-query-xml": "self.version",
         "magento/module-sales-orders-data-exporter": "self.version",
-        "magento/module-scopes-data-exporter": "self.version"
+        "magento/module-scopes-data-exporter": "self.version",
+        "magento/module-category-attribute-data-exporter": "self.version"
     }
 }

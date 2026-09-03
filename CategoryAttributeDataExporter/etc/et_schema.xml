@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+/**
+ * Copyright 2026 Adobe
+ * All Rights Reserved.
+ */
+-->
+<config xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="urn:magento:module:Magento_DataExporter:etc/et_schema.xsd">
+    <record name="Export">
+        <field name="categoryAttributes" type="CategoryAttributeMetadata" repeated="true"
+               provider="Magento\CategoryAttributeDataExporter\Model\Provider\EavAttributes\CategoryAttributeMetadataProvider">
+            <using field="id" />
+        </field>
+    </record>
+
+    <record name="Category">
+        <field name="attributes"
+               type="Attribute"
+               repeated="true"
+               provider="Magento\CategoryAttributeDataExporter\Model\Provider\EavAttributes\CategoryCustomAttributesProvider"
+        >
+            <using field="categoryId" />
+            <using field="storeViewCode" />
+        </field>
+    </record>
+
+    <record name="CategoryAttributeMetadata">
+        <field name="id" type="ID" />
+        <field name="storeCode" type="String"/>
+        <field name="websiteCode" type="String"/>
+        <field name="storeViewCode" type="String" />
+        <field name="attributeCode" type="String" />
+        <field name="dataType" type="String" />
+        <field name="label" type="String" />
+        <field name="modifiedAt" type="String"/>
+    </record>
+</config>

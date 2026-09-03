@@ -30,6 +30,7 @@
         <subscriptions>
             <table name="eav_attribute" entity_column="attribute_id" />
             <table name="catalog_eav_attribute" entity_column="attribute_id" />
+            <table name="eav_attribute_label" entity_column="attribute_id" />
         </subscriptions>
     </view>
 

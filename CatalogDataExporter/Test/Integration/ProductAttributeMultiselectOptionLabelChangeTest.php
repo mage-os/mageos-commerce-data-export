@@ -7,6 +7,7 @@ declare(strict_types=1);
 
 namespace Magento\CatalogDataExporter\Test\Integration;
 
+use Magento\CatalogDataExporter\Model\Provider\EavAttributes\EavAttributeOptionValueResolver;
 use Magento\CatalogDataExporter\Model\Provider\Product\AttributeMetadata;
 use Magento\CatalogDataExporter\Test\Fixture\ShirtColorMultiselectProducts as ShirtColorMultiselectProductsFixture;
 use Magento\Eav\Model\Config as EavConfig;
@@ -175,8 +176,7 @@ class ProductAttributeMultiselectOptionLabelChangeTest extends AbstractProductTe
     private function resetAttributeMetadataCache(): void
     {
         $provider = Bootstrap::getObjectManager()->get(AttributeMetadata::class);
-        $ref = new \ReflectionClass($provider);
-        $prop = $ref->getProperty('attributeMetadata');
+        $prop = (new \ReflectionClass(EavAttributeOptionValueResolver::class))->getProperty('attributeMetadata');
         $prop->setValue($provider, null);
     }
 
