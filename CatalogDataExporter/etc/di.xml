@@ -400,7 +400,7 @@
             </argument>
 
             <argument name="feedItemIdentifiers" xsi:type="array">
-                <item name="urlPath" xsi:type="string">urlPath</item>
+                <item name="categoryId" xsi:type="string">categoryId</item>
                 <item name="storeViewCode" xsi:type="string">storeViewCode</item>
             </argument>
         </arguments>
@@ -642,22 +642,9 @@
             </argument>
         </arguments>
     </type>
-    <type name="Magento\CatalogDataExporter\Setup\Patch\Data\MigrateCategoryFeedIdentity">
+    <type name="Magento\CatalogDataExporter\Setup\Patch\Data\RestoreCategoryFeedV1Identity">
         <arguments>
             <argument name="categoryFeedIndexMetadata" xsi:type="object">Magento\CatalogDataExporter\Model\Indexer\CategoryFeedIndexMetadata</argument>
-        </arguments>
-    </type>
-    <!--
-        Declare the fulltext search indexer this module's export replaces as manageable by
-        AdobeCommerce_IndexerStatusManager. Only allowlisted indexers may be disabled, so this contribution is
-        what lets the config flag in etc/config.xml actually take effect (the generic module ships an empty
-        allowlist).
-    -->
-    <type name="AdobeCommerce\IndexerStatusManager\Model\Config">
-        <arguments>
-            <argument name="manageableIndexers" xsi:type="array">
-                <item name="catalogsearch_fulltext" xsi:type="string">catalogsearch_fulltext</item>
-            </argument>
         </arguments>
     </type>
 </config>
